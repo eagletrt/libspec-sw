@@ -1,26 +1,36 @@
 {
   "$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
-  "name": "LibraryTemplate",
-  "version": "1.0.0",
-  "description": "Templates for libraries compatible with the PlatformIO ecosystem",
+  "name": "SPEC",
+  "version": "0.1.0",
+  "description": "Library to dynamically configure MCUs parameters via different types of peripherals. Can be used for any embedded system.",
   "keywords": [
-    "template"
+    "configurator",
+    "embedded"
   ],
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/eagletrt/libspec-sw"
   },
   "authors": [
     {
-      "name": "Antonio Gelain",
-      "email": "antonio.gelain2@gmail.com",
+      "name": "Mirko Lana",
+      "email": "mirko.lana@eagletrt.it",
       "maintainer": true
     }
   ],
   "license": "AGPL-3.0-only",
   "frameworks": "*",
   "platforms": "*",
-  "headers": [],
+  "dependencies": [
+      {
+        "name": "ArenaAllocator",
+        "version": "https://github.com/eagletrt/libarena-allocator-sw.git#v1.0.0"
+      }
+  ],
+  "headers": [
+      "spec.h",
+      "spec-api.h"
+  ],
   "examples": [],
   "export": {
     "include": [
