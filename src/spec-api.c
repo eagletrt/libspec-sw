@@ -36,14 +36,10 @@ static bool prv_spec_api_check_magic_number(const SpecHandler_t *hspec) {
 
 SpecReturnCode_t spec_api_init(SpecHandler_t *hspec,
                                ArenaAllocatorHandler_t *harena,
+                               const SpecParameter_t *param,
                                size_t param_num,
-                               const void **default_values,
-                               const size_t *sizes,
                                int (*read_nvm)(size_t offset, void *data, size_t size),
                                int (*write_nvm)(size_t offset, const void *data, size_t size)) {
-    size_t i;
-    int res;
-
     if (hspec == NULL || harena == NULL) {
         return SPEC_NULL_PTR;
     }
@@ -58,13 +54,7 @@ SpecReturnCode_t spec_api_init(SpecHandler_t *hspec,
     }
 
     for (size_t i = 0; i < param_num; ++i) {
-        hspec->param[i].size = sizes[i];
-        hspec->param[i].data = arena_allocator_api_alloc(harena, sizes[i]);
-        if (hspec->param[i].data == NULL) {
-            return SPEC_NULL_PTR;
-        }
-
-        if (memcpy(hspec->param[i].data, default_values[i], sizes[i]) == NULL) {
+        if (memcpy(&hspec->param[i], &param[i], sizeof(param[i])) == NULL) {
             return SPEC_NULL_PTR;
         }
     }
@@ -73,6 +63,10 @@ SpecReturnCode_t spec_api_init(SpecHandler_t *hspec,
 }
 
 SpecReturnCode_t spec_api_load(SpecHandler_t *hspec) {
+    if (hspec == NULL) {
+        return SPEC_NULL_PTR;
+    }
+
     if (prv_spec_api_check_magic_number(hspec)) {
         return SPEC_NO_CONFIG;
     }
@@ -83,6 +77,10 @@ SpecReturnCode_t spec_api_load(SpecHandler_t *hspec) {
 }
 
 SpecReturnCode_t spec_api_store(const SpecHandler_t *hspec) {
+    if (hspec == NULL) {
+        return SPEC_NULL_PTR;
+    }
+
     /* TODO: function body. */
 
     return SPEC_OK;
@@ -97,7 +95,7 @@ SpecReturnCode_t spec_api_get(const SpecHandler_t *hspec, size_t idx, void *out,
         return SPEC_IDX_OUT_OF_BOUNDS;
     }
 
-    if (size != hspec->param[idx].size) {
+    if (size < hspec->param[idx].size) {
         return SPEC_WRONG_SIZE;
     }
 
@@ -117,7 +115,7 @@ SpecReturnCode_t spec_api_set(SpecHandler_t *hspec, size_t idx, const void *data
         return SPEC_IDX_OUT_OF_BOUNDS;
     }
 
-    if (size != hspec->param[idx].size) {
+    if (size > hspec->param[idx].size) {
         return SPEC_WRONG_SIZE;
     }
 

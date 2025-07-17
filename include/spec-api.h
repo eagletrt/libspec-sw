@@ -28,17 +28,15 @@
  *
  * \param[out]      hspec: The configuration handler structure.
  * \param[in]       harena: The arena allocator handler structure.
- * \param[in]       param_num: The number of parameters.
- * \param[in]       sizes: An array of sizes for each parameter.
+ * \param[in]       param: An array of SPEC parameters
  * \param[in]       read_nvm: The function used to read from NVM.
  * \param[in]       write_nvm: The function used to write into NVM.
  * \return          SPEC_OK on success, SPEC_NULL_PTR otherwise.
  */
 SpecReturnCode_t spec_api_init(SpecHandler_t *hspec,
                                ArenaAllocatorHandler_t *harena,
+                               const SpecParameter_t *param,
                                size_t param_num,
-                               const void **default_values,
-                               const size_t *sizes,
                                int (*read_nvm)(size_t offset, void *data, size_t size),
                                int (*write_nvm)(size_t offset, const void *data, size_t size));
 
@@ -47,7 +45,8 @@ SpecReturnCode_t spec_api_init(SpecHandler_t *hspec,
  *
  * \param[out]      hspec: The configuration handler structure.
  * \return          SPEC_OK on success, SPEC_NO_CONFIG if there is no
- *                  configuration stored, SPEC_IO_ERR otherwise.
+ *                  configuration stored, SPEC_NULL_PTR if `hspec` is NULL,
+ *                  SPEC_IO_ERR otherwise.
  */
 SpecReturnCode_t spec_api_load(SpecHandler_t *hspec);
 
@@ -55,7 +54,8 @@ SpecReturnCode_t spec_api_load(SpecHandler_t *hspec);
  * \brief           Stores the configuration into the NVM.
  *
  * \param[in]       hspec: The configuration handler structure.
- * \return          SPEC_OK on success, SPEC_IO_ERR otherwise.
+ * \return          SPEC_OK on success, SPEC_NULL_PTR if `hspec` is NULL,
+ *                  SPEC_IO_ERR otherwise.
  */
 SpecReturnCode_t spec_api_store(const SpecHandler_t *hspec);
 
@@ -70,7 +70,7 @@ SpecReturnCode_t spec_api_store(const SpecHandler_t *hspec);
  * \return          SPEC_OK on success, SPEC_NULL_PTR if `hspec` or `out` is
  *                  NULL and if `memcpy` fails, SPEC_IDX_OUT_OF_BOUNDS if `idx`
  *                  is higher than the number of parameters, SPEC_WRONG_SIZE
- *                  if `size` and the parameter's size are different.
+ *                  if `size` bigger than parameter's size.
  */
 SpecReturnCode_t spec_api_get(const SpecHandler_t *hspec, size_t idx, void *out, size_t size);
 
@@ -85,7 +85,7 @@ SpecReturnCode_t spec_api_get(const SpecHandler_t *hspec, size_t idx, void *out,
  * \return          SPEC_OK on success, SPEC_NULL_PTR if `hspec` or `data` is
  *                  NULL and if `memcpy` fails, SPEC_IDX_OUT_OF_BOUNDS if `idx`
  *                  is higher than the number of parameters, SPEC_WRONG_SIZE
- *                  if `size` and the parameter's size are different.
+ *                  if `size` is smaller than parameter's size.
  */
 SpecReturnCode_t spec_api_set(SpecHandler_t *hspec, size_t idx, const void *data, size_t size);
 
