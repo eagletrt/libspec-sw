@@ -36,9 +36,9 @@
 SpecReturnCode_t spec_api_init(SpecHandler_t *hspec,
                                ArenaAllocatorHandler_t *harena,
                                const SpecParameter_t *param,
-                               size_t param_num,
-                               int (*read_nvm)(size_t offset, void *data, size_t size),
-                               int (*write_nvm)(size_t offset, const void *data, size_t size));
+                               size_t param_count,
+                               SpecReturnCode_t (*read_nvm)(size_t offset, void *data, size_t size),
+                               SpecReturnCode_t (*write_nvm)(size_t offset, const void *data, size_t size));
 
 /*!
  * \brief           Loads the configuration from NVM into RAM.
@@ -66,13 +66,13 @@ SpecReturnCode_t spec_api_store(const SpecHandler_t *hspec);
  * \param[in]       idx: The parameter position.
  * \param[out]      out: A pointer to the variable where the parameter is
  *                  copied into.
- * \param[in]       size: The output data size.
+ * \param[in]       type: The output data type.
  * \return          SPEC_OK on success, SPEC_NULL_PTR if `hspec` or `out` is
  *                  NULL and if `memcpy` fails, SPEC_IDX_OUT_OF_BOUNDS if `idx`
- *                  is higher than the number of parameters, SPEC_WRONG_SIZE
- *                  if `size` bigger than parameter's size.
+ *                  is higher than the number of parameters, SPEC_WRONG_TYPE
+ *                  if `type` is not equal as idx-th parameter's type.
  */
-SpecReturnCode_t spec_api_get(const SpecHandler_t *hspec, size_t idx, void *out, size_t size);
+SpecReturnCode_t spec_api_get(const SpecHandler_t *hspec, size_t idx, void *out, SpecParameterType_t type);
 
 /*!
  * \brief           Get a copy of the parameter at idx position.
@@ -80,13 +80,13 @@ SpecReturnCode_t spec_api_get(const SpecHandler_t *hspec, size_t idx, void *out,
  * \param[out]      hspec: The configuration handler structure.
  * \param[in]       idx: The parameter position.
  * \param[in]       data: A pointer to the variable containing the new value.
- * \param[in]       size: The input data size.
+ * \param[in]       type: The input data type.
  *
  * \return          SPEC_OK on success, SPEC_NULL_PTR if `hspec` or `data` is
  *                  NULL and if `memcpy` fails, SPEC_IDX_OUT_OF_BOUNDS if `idx`
- *                  is higher than the number of parameters, SPEC_WRONG_SIZE
- *                  if `size` is smaller than parameter's size.
+ *                  is higher than the number of parameters, SPEC_WRONG_TYPE
+ *                  if `type` is not equal as idx-th parameter's type.
  */
-SpecReturnCode_t spec_api_set(SpecHandler_t *hspec, size_t idx, const void *data, size_t size);
+SpecReturnCode_t spec_api_set(SpecHandler_t *hspec, size_t idx, const void *data, SpecParameterType_t type);
 
 #endif /* SPEC_API_H */
