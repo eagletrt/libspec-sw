@@ -21,23 +21,24 @@
 #define SPEC_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 /*!
  * \brief           Enumeration with all possible return code of the library.
  */
 typedef enum SpecReturnCode {
-    SPEC_OK,
-    SPEC_NULL_PTR,
-    SPEC_IDX_OUT_OF_BOUNDS,
-    SPEC_WRONG_TYPE,
-    SPEC_NO_CONFIG,
-    SPEC_IO_ERR
+    SPEC_OK,                /*!< Everything is fine */
+    SPEC_NULL_PTR,          /*!< Unexpected NULL pointer detected */
+    SPEC_IDX_OUT_OF_BOUNDS, /*!< The given index exceeds its bounds */
+    SPEC_WRONG_TYPE,        /*!< Data type mismatch */
+    SPEC_NO_CONFIG,         /*!< No configuration stored */
+    SPEC_IO_ERR             /*!< I/O related error */
 } SpecReturnCode_t;
 
 /*!
  * \brief           Enumeration with all possible parameter types.
  */
-typedef enum SpecParameterType {
+typedef enum SpecType {
     SPEC_I8,
     SPEC_U8,
     SPEC_I16,
@@ -48,15 +49,28 @@ typedef enum SpecParameterType {
     SPEC_U64,
     SPEC_FLOAT,
     SPEC_BOOL
-} SpecParameterType_t;
+} SpecType_t;
 
 /*!
  * \brief           A structure representing a configuration parameter.
+ *
+ * \description     An helper structure used to give a default configuration
+ *                  to the handler via \ref spec_api_init function. It also
+ *                  describes the structure of the configuration.
  */
 typedef struct SpecParameter {
-    void *data;               /*!< Parameter's data */
-    SpecParameterType_t type; /*!< Parameter's type */
+    void *data;      /*!< Parameter's data */
+    SpecType_t type; /*!< Parameter's type */
 } SpecParameter_t;
+
+/*!
+ * \brief           A structure encapsulating useful information about
+ *                  configuration parameters.
+ */
+typedef struct SpecItem {
+    size_t offset;   /*!< The aligned offset of the item */
+    SpecType_t type; /*!< The type of the parameter */
+} SpecItem_t;
 
 /*!
  * \brief           A structure that encapsulate data, functions and all
@@ -65,8 +79,8 @@ typedef struct SpecParameter {
  * \attention       This structure should not be used directly.
  */
 typedef struct SpecHandler {
-    void *param_data;                                                            /*! The configuration data */
-    SpecParameterType_t *param_types;                                            /*! An array of parameters type */
+    uintptr_t *param_data;                                                       /*!< The configuration data */
+    SpecItem_t *param_items;                                                     /*!< An array of items */
     size_t param_count;                                                          /*!< The number of parameters */
     SpecReturnCode_t (*read_nvm)(size_t offset, void *data, size_t size);        /*!< Function to write on NVM */
     SpecReturnCode_t (*write_nvm)(size_t offset, const void *data, size_t size); /*!< Function to read from NVM */

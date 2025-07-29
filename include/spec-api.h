@@ -28,7 +28,7 @@
  *
  * \param[out]      hspec: The configuration handler structure.
  * \param[in]       harena: The arena allocator handler structure.
- * \param[in]       param: An array of SPEC parameters
+ * \param[in]       param: An array of SPEC parameters.
  * \param[in]       read_nvm: The function used to read from NVM.
  * \param[in]       write_nvm: The function used to write into NVM.
  * \return          SPEC_OK on success, SPEC_NULL_PTR otherwise.
@@ -64,15 +64,14 @@ SpecReturnCode_t spec_api_store(const SpecHandler_t *hspec);
  *
  * \param[in]       hspec: The configuration handler structure.
  * \param[in]       idx: The parameter position.
- * \param[out]      out: A pointer to the variable where the parameter is
- *                  copied into.
+ * \param[out]      out: A pointer to the variable where the parameter is copied into.
  * \param[in]       type: The output data type.
  * \return          SPEC_OK on success, SPEC_NULL_PTR if `hspec` or `out` is
  *                  NULL and if `memcpy` fails, SPEC_IDX_OUT_OF_BOUNDS if `idx`
  *                  is higher than the number of parameters, SPEC_WRONG_TYPE
  *                  if `type` is not equal as idx-th parameter's type.
  */
-SpecReturnCode_t spec_api_get(const SpecHandler_t *hspec, size_t idx, void *out, SpecParameterType_t type);
+SpecReturnCode_t spec_api_get(const SpecHandler_t *hspec, size_t idx, void *out, SpecType_t type);
 
 /*!
  * \brief           Get a copy of the parameter at idx position.
@@ -87,6 +86,6 @@ SpecReturnCode_t spec_api_get(const SpecHandler_t *hspec, size_t idx, void *out,
  *                  is higher than the number of parameters, SPEC_WRONG_TYPE
  *                  if `type` is not equal as idx-th parameter's type.
  */
-SpecReturnCode_t spec_api_set(SpecHandler_t *hspec, size_t idx, const void *data, SpecParameterType_t type);
+SpecReturnCode_t spec_api_set(SpecHandler_t *hspec, size_t idx, const void *data, SpecType_t type);
 
 #endif /* SPEC_API_H */

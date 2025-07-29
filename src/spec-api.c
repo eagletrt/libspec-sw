@@ -42,7 +42,7 @@ static bool prv_spec_api_check_magic_number(const SpecHandler_t *hspec) {
  * \param[in]       type: The type to get the size of.
  * \return          The size on success, 0 otherwise.
  */
-static size_t prv_spec_api_sizeof(SpecParameterType_t type) {
+static size_t prv_spec_api_sizeof(SpecType_t type) {
     switch (type) {
         case SPEC_I8:
         case SPEC_U8:
@@ -77,7 +77,7 @@ static size_t prv_spec_api_sizeof(SpecParameterType_t type) {
  * \param[in]       type: The type to get the alignment of.
  * \return          The alignment on success, 0 otherwise.
  */
-static size_t prv_spec_api_alignof(SpecParameterType_t type) {
+static size_t prv_spec_api_alignof(SpecType_t type) {
     switch (type) {
         case SPEC_I8:
         case SPEC_U8:
@@ -121,27 +121,6 @@ static size_t prv_spec_api_align_up(size_t offset, size_t alignment) {
     return (offset + alignment - 1) & ~(alignment - 1);
 }
 
-/*!
- * \brief           Get the offset of the idx-th parameter.
- * 
- * \param[in]       hspec: The configuration handler structure.
- * \param[in]       idx: The parameter's index.
- * \return          The offset of the idx-th parameter.
- */
-static size_t prv_spec_api_get_offset(const SpecHandler_t *hspec, size_t idx) {
-    size_t offset, align;
-
-    offset = 0;
-    for (size_t i = 0; i < idx; ++i) {
-        align = prv_spec_api_alignof(hspec->param_types[i]);
-        offset = prv_spec_api_align_up(offset, align);
-        offset += prv_spec_api_sizeof(hspec->param_types[i]);
-    }
-
-    align = prv_spec_api_alignof(hspec->param_types[idx]);
-    return prv_spec_api_align_up(offset, align);
-}
-
 SpecReturnCode_t spec_api_init(SpecHandler_t *hspec,
                                ArenaAllocatorHandler_t *harena,
                                const SpecParameter_t *param,
@@ -157,19 +136,16 @@ SpecReturnCode_t spec_api_init(SpecHandler_t *hspec,
     hspec->param_count = param_count;
     hspec->read_nvm = read_nvm;   /* TODO: handle NULL */
     hspec->write_nvm = write_nvm; /* TODO: handle NULL */
-    hspec->param_types = arena_allocator_api_calloc(harena, sizeof(SpecParameterType_t), param_count);
-    if (hspec->param_types == NULL) {
+    hspec->param_items = arena_allocator_api_calloc(harena, sizeof(SpecItem_t), param_count);
+    if (hspec->param_items == NULL) {
         return SPEC_NULL_PTR;
-    }
-
-    for (i = 0; i < param_count; ++i) {
-        hspec->param_types[i] = param[i].type;
     }
 
     size = 0;
     for (i = 0; i < param_count; ++i) {
-        size_t align = prv_spec_api_alignof(param[i].type);
-        size = prv_spec_api_align_up(size, align);
+        hspec->param_items[i].type = param[i].type;
+        hspec->param_items[i].offset = size;
+        size = prv_spec_api_align_up(size, prv_spec_api_alignof(param[i].type));
         size += prv_spec_api_sizeof(param[i].type);
     }
 
@@ -178,7 +154,6 @@ SpecReturnCode_t spec_api_init(SpecHandler_t *hspec,
         return SPEC_NULL_PTR;
     }
 
-    memset(hspec->param_data, 0, size);
     for (i = 0; i < param_count; ++i) {
         int ret = spec_api_set(hspec, i, param[i].data, param[i].type);
         if (ret != SPEC_OK) {
@@ -213,7 +188,7 @@ SpecReturnCode_t spec_api_store(const SpecHandler_t *hspec) {
     return SPEC_OK;
 }
 
-SpecReturnCode_t spec_api_get(const SpecHandler_t *hspec, size_t idx, void *out, SpecParameterType_t type) {
+SpecReturnCode_t spec_api_get(const SpecHandler_t *hspec, size_t idx, void *out, SpecType_t type) {
     if (hspec == NULL || out == NULL) {
         return SPEC_NULL_PTR;
     }
@@ -222,16 +197,16 @@ SpecReturnCode_t spec_api_get(const SpecHandler_t *hspec, size_t idx, void *out,
         return SPEC_IDX_OUT_OF_BOUNDS;
     }
 
-    if (type != hspec->param_types[idx]) {
+    if (type != hspec->param_items[idx].type) {
         return SPEC_WRONG_TYPE;
     }
 
-    memcpy(out, ((uint8_t *)hspec->param_data) + prv_spec_api_get_offset(hspec, idx), prv_spec_api_sizeof(type));
+    memcpy(out, hspec->param_data + hspec->param_items[idx].offset, prv_spec_api_sizeof(type));
 
     return SPEC_OK;
 }
 
-SpecReturnCode_t spec_api_set(SpecHandler_t *hspec, size_t idx, const void *data, SpecParameterType_t type) {
+SpecReturnCode_t spec_api_set(SpecHandler_t *hspec, size_t idx, const void *data, SpecType_t type) {
     if (hspec == NULL || data == NULL) {
         return SPEC_NULL_PTR;
     }
@@ -240,11 +215,11 @@ SpecReturnCode_t spec_api_set(SpecHandler_t *hspec, size_t idx, const void *data
         return SPEC_IDX_OUT_OF_BOUNDS;
     }
 
-    if (type != hspec->param_types[idx]) {
+    if (type != hspec->param_items[idx].type) {
         return SPEC_WRONG_TYPE;
     }
 
-    memcpy(((uint8_t *)hspec->param_data) + prv_spec_api_get_offset(hspec, idx), data, prv_spec_api_sizeof(type));
+    memcpy(hspec->param_data + hspec->param_items[idx].offset, data, prv_spec_api_sizeof(type));
 
     return SPEC_OK;
 }
