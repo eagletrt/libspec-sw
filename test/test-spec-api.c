@@ -54,16 +54,16 @@ const int64_t DEFAULT_U64 = 0xFFFFFFFFFFFFFFFF;
 const float DEFAULT_FLOAT = 3.14;
 const bool DEFAULT_BOOL = false;
 const SpecParameter_t DEFAULT_CONFIG[CONFIG_LEN] = {
-    { .data = (void *)&DEFAULT_I8, .type = SPEC_I8 },
-    { .data = (void *)&DEFAULT_U8, .type = SPEC_U8 },
-    { .data = (void *)&DEFAULT_I16, .type = SPEC_I16 },
-    { .data = (void *)&DEFAULT_U16, .type = SPEC_U16 },
-    { .data = (void *)&DEFAULT_I32, .type = SPEC_I32 },
-    { .data = (void *)&DEFAULT_U32, .type = SPEC_U32 },
-    { .data = (void *)&DEFAULT_I64, .type = SPEC_I64 },
-    { .data = (void *)&DEFAULT_U64, .type = SPEC_U64 },
-    { .data = (void *)&DEFAULT_FLOAT, .type = SPEC_FLOAT },
-    { .data = (void *)&DEFAULT_BOOL, .type = SPEC_BOOL }
+    { .data = (void *)&DEFAULT_I8, .size = sizeof(DEFAULT_I8) },
+    { .data = (void *)&DEFAULT_U8, .size = sizeof(DEFAULT_U8) },
+    { .data = (void *)&DEFAULT_I16, .size = sizeof(DEFAULT_I16) },
+    { .data = (void *)&DEFAULT_U16, .size = sizeof(DEFAULT_U16) },
+    { .data = (void *)&DEFAULT_I32, .size = sizeof(DEFAULT_I32) },
+    { .data = (void *)&DEFAULT_U32, .size = sizeof(DEFAULT_U32) },
+    { .data = (void *)&DEFAULT_I64, .size = sizeof(DEFAULT_I64) },
+    { .data = (void *)&DEFAULT_U64, .size = sizeof(DEFAULT_U64) },
+    { .data = (void *)&DEFAULT_FLOAT, .size = sizeof(DEFAULT_FLOAT) },
+    { .data = (void *)&DEFAULT_BOOL, .size = sizeof(DEFAULT_BOOL) }
 };
 
 /*! GLOBAL VAR. */
@@ -106,80 +106,80 @@ void check_spec_init_null_parameters(void) {
 
 void check_spec_get_with_null_handler(void) {
     int8_t data;
-    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_get(NULL, CONFIG_I8, &data, SPEC_I8));
+    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_get(NULL, CONFIG_I8, &data, sizeof(DEFAULT_I8)));
 }
 
 void check_spec_get_with_null_var(void) {
-    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_get(&hspec, CONFIG_I8, NULL, SPEC_I8));
+    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_get(&hspec, CONFIG_I8, NULL, sizeof(DEFAULT_I8)));
 }
 
 void check_spec_get_with_wrong_type(void) {
     float data;
-    TEST_ASSERT_EQUAL_INT(SPEC_WRONG_TYPE, spec_api_get(&hspec, CONFIG_I8, &data, SPEC_FLOAT));
+    TEST_ASSERT_EQUAL_INT(SPEC_WRONG_SIZE, spec_api_get(&hspec, CONFIG_I8, &data, sizeof(DEFAULT_FLOAT)));
 }
 
 void check_spec_get_with_wrong_index(void) {
     int8_t data;
-    TEST_ASSERT_EQUAL_INT(SPEC_IDX_OUT_OF_BOUNDS, spec_api_get(&hspec, CONFIG_LEN, &data, SPEC_I8));
+    TEST_ASSERT_EQUAL_INT(SPEC_IDX_OUT_OF_BOUNDS, spec_api_get(&hspec, CONFIG_LEN, &data, sizeof(DEFAULT_I8)));
 }
 
 void check_spec_get_with_int8_parameter(void) {
     int8_t data;
-    spec_api_get(&hspec, CONFIG_I8, &data, SPEC_I8);
+    spec_api_get(&hspec, CONFIG_I8, &data, sizeof(DEFAULT_I8));
     TEST_ASSERT_EQUAL_INT8(DEFAULT_I8, data);
 }
 
 void check_spec_get_with_uint8_parameter(void) {
     uint8_t data;
-    spec_api_get(&hspec, CONFIG_U8, &data, SPEC_U8);
+    spec_api_get(&hspec, CONFIG_U8, &data, sizeof(DEFAULT_U8));
     TEST_ASSERT_EQUAL_INT8(DEFAULT_U8, data);
 }
 
 void check_spec_get_with_int16_parameter(void) {
     int16_t data;
-    spec_api_get(&hspec, CONFIG_I16, &data, SPEC_I16);
+    spec_api_get(&hspec, CONFIG_I16, &data, sizeof(DEFAULT_I16));
     TEST_ASSERT_EQUAL_INT16(DEFAULT_I16, data);
 }
 
 void check_spec_get_with_uint16_parameter(void) {
     uint16_t data;
-    spec_api_get(&hspec, CONFIG_U16, &data, SPEC_U16);
+    spec_api_get(&hspec, CONFIG_U16, &data, sizeof(DEFAULT_U16));
     TEST_ASSERT_EQUAL_INT16(DEFAULT_U16, data);
 }
 
 void check_spec_get_with_int32_parameter(void) {
     int32_t data;
-    spec_api_get(&hspec, CONFIG_I32, &data, SPEC_I32);
+    spec_api_get(&hspec, CONFIG_I32, &data, sizeof(DEFAULT_I32));
     TEST_ASSERT_EQUAL_INT32(DEFAULT_I32, data);
 }
 
 void check_spec_get_with_uint32_parameter(void) {
     uint32_t data;
-    spec_api_get(&hspec, CONFIG_U32, &data, SPEC_U32);
+    spec_api_get(&hspec, CONFIG_U32, &data, sizeof(DEFAULT_U32));
     TEST_ASSERT_EQUAL_INT32(DEFAULT_U32, data);
 }
 
 void check_spec_get_with_int64_parameter(void) {
     int64_t data;
-    spec_api_get(&hspec, CONFIG_I64, &data, SPEC_I64);
+    spec_api_get(&hspec, CONFIG_I64, &data, sizeof(DEFAULT_I64));
     TEST_ASSERT_EQUAL_INT64(DEFAULT_I64, data);
 }
 
 void check_spec_get_with_uint64_parameter(void) {
     uint64_t data;
-    spec_api_get(&hspec, CONFIG_U64, &data, SPEC_U64);
+    spec_api_get(&hspec, CONFIG_U64, &data, sizeof(DEFAULT_U64));
     TEST_ASSERT_EQUAL_INT64(DEFAULT_U64, data);
 }
 
 void check_spec_get_with_float_parameter(void) {
     float data;
-    spec_api_get(&hspec, CONFIG_FLOAT, &data, SPEC_FLOAT);
+    spec_api_get(&hspec, CONFIG_FLOAT, &data, sizeof(DEFAULT_FLOAT));
     TEST_ASSERT_EQUAL_FLOAT(DEFAULT_FLOAT, data);
 }
 
 void check_spec_get_with_bool_parameter(void) {
     bool data;
-    spec_api_get(&hspec, CONFIG_BOOL, &data, SPEC_BOOL);
+    spec_api_get(&hspec, CONFIG_BOOL, &data, sizeof(DEFAULT_BOOL));
 
     if (DEFAULT_BOOL) {
         TEST_ASSERT_TRUE(data);
@@ -197,89 +197,74 @@ void check_spec_get_with_bool_parameter(void) {
 
 void check_spec_set_with_null_handler(void) {
     int8_t data = 4;
-    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_set(NULL, CONFIG_I8, &data, SPEC_I8));
+    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_set(NULL, CONFIG_I8, &data, sizeof(DEFAULT_I8)));
 }
 
 void check_spec_set_with_null_var(void) {
-    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_set(&hspec, CONFIG_I8, NULL, SPEC_I8));
+    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_set(&hspec, CONFIG_I8, NULL, sizeof(DEFAULT_I8)));
 }
 
 void check_spec_set_with_wrong_type(void) {
     int8_t data = 0xFF;
-    TEST_ASSERT_EQUAL_INT(SPEC_WRONG_TYPE, spec_api_set(&hspec, CONFIG_FLOAT, &data, SPEC_I8));
+    TEST_ASSERT_EQUAL_INT(SPEC_WRONG_SIZE, spec_api_set(&hspec, CONFIG_FLOAT, &data, sizeof(DEFAULT_I8)));
 }
 
 void check_spec_set_with_wrong_index(void) {
     int8_t data = 0xFF;
-    TEST_ASSERT_EQUAL_INT(SPEC_IDX_OUT_OF_BOUNDS, spec_api_set(&hspec, CONFIG_LEN, &data, SPEC_I8));
+    TEST_ASSERT_EQUAL_INT(SPEC_IDX_OUT_OF_BOUNDS, spec_api_set(&hspec, CONFIG_LEN, &data, sizeof(DEFAULT_I8)));
 }
 
 void check_spec_set_with_int8_parameter(void) {
     int8_t data = 3;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_I8, &data, SPEC_I8));
+    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_I8, &data, sizeof(DEFAULT_I8)));
 }
 
 void check_spec_set_with_uint8_parameter(void) {
     uint8_t data = 3;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_U8, &data, SPEC_U8));
+    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_U8, &data, sizeof(DEFAULT_U8)));
 }
 
 void check_spec_set_with_int16_parameter(void) {
     int16_t data = 3;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_I16, &data, SPEC_I16));
+    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_I16, &data, sizeof(DEFAULT_I16)));
 }
 
 void check_spec_set_with_uint16_parameter(void) {
     uint16_t data = 3;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_U16, &data, SPEC_U16));
+    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_U16, &data, sizeof(DEFAULT_U16)));
 }
 
 void check_spec_set_with_int32_parameter(void) {
     int32_t data = 3;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_I32, &data, SPEC_I32));
+    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_I32, &data, sizeof(DEFAULT_I32)));
 }
 
 void check_spec_set_with_uint32_parameter(void) {
     uint32_t data = 3;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_U32, &data, SPEC_U32));
+    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_U32, &data, sizeof(DEFAULT_U32)));
 }
 
 void check_spec_set_with_int64_parameter(void) {
     int64_t data = 3;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_I64, &data, SPEC_I64));
+    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_I64, &data, sizeof(DEFAULT_I64)));
 }
 
 void check_spec_set_with_uint64_parameter(void) {
     uint64_t data = 3;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_U64, &data, SPEC_U64));
+    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_U64, &data, sizeof(DEFAULT_U64)));
 }
 
 void check_spec_set_with_float_parameter(void) {
     float data = 2.14;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_FLOAT, &data, SPEC_FLOAT));
+    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_FLOAT, &data, sizeof(DEFAULT_FLOAT)));
 }
 
 void check_spec_set_with_bool_parameter(void) {
     bool data = true;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_BOOL, &data, SPEC_BOOL));
+    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_BOOL, &data, sizeof(DEFAULT_BOOL)));
 }
 
 /*! @} */
-
-// int main(void) {
-//     arena_allocator_api_init(&harena);
-//     spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, NULL, NULL);
-//
-//     // int8_t d1, res;
-//     // res = spec_api_get(&hspec, CONFIG_I8, (void *)&d1, SPEC_I8);
-//     // printf("res=%d\td1=%d\n", res, d1);
-//     //
-//     // uint8_t d2;
-//     // res = spec_api_get(&hspec, CONFIG_U8, (void *)&d2, SPEC_U8);
-//     // printf("res=%d\td2=%d\n", res, d2);
-//
-//     arena_allocator_api_free(&harena);
-// }
 
 int main(void) {
     UNITY_BEGIN();

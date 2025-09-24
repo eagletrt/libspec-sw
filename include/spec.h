@@ -30,26 +30,10 @@ typedef enum SpecReturnCode {
     SPEC_OK,                /*!< Everything is fine */
     SPEC_NULL_PTR,          /*!< Unexpected NULL pointer detected */
     SPEC_IDX_OUT_OF_BOUNDS, /*!< The given index exceeds its bounds */
-    SPEC_WRONG_TYPE,        /*!< Data type mismatch */
+    SPEC_WRONG_SIZE,        /*!< Data size mismatch */
     SPEC_NO_CONFIG,         /*!< No configuration stored */
     SPEC_IO_ERR             /*!< I/O related error */
 } SpecReturnCode_t;
-
-/*!
- * \brief           Enumeration with all possible parameter types.
- */
-typedef enum SpecType {
-    SPEC_I8,
-    SPEC_U8,
-    SPEC_I16,
-    SPEC_U16,
-    SPEC_I32,
-    SPEC_U32,
-    SPEC_I64,
-    SPEC_U64,
-    SPEC_FLOAT,
-    SPEC_BOOL
-} SpecType_t;
 
 /*!
  * \brief           A structure representing a configuration parameter.
@@ -59,18 +43,9 @@ typedef enum SpecType {
  *                  describes the structure of the configuration.
  */
 typedef struct SpecParameter {
-    void *data;      /*!< Parameter's data */
-    SpecType_t type; /*!< Parameter's type */
+    void *data;  /*!< Parameter's data */
+    size_t size; /*!< The data size */
 } SpecParameter_t;
-
-/*!
- * \brief           A structure encapsulating useful information about
- *                  configuration parameters.
- */
-typedef struct SpecItem {
-    size_t offset;   /*!< The aligned offset of the item */
-    SpecType_t type; /*!< The type of the parameter */
-} SpecItem_t;
 
 /*!
  * \brief           A structure that encapsulate data, functions and all
@@ -79,8 +54,7 @@ typedef struct SpecItem {
  * \attention       This structure should not be used directly.
  */
 typedef struct SpecHandler {
-    uintptr_t *param_data;                                                       /*!< The configuration data */
-    SpecItem_t *param_items;                                                     /*!< An array of items */
+    SpecParameter_t *param_data;                                                 /*!< The configuration data */
     size_t param_count;                                                          /*!< The number of parameters */
     SpecReturnCode_t (*read_nvm)(size_t offset, void *data, size_t size);        /*!< Function to write on NVM */
     SpecReturnCode_t (*write_nvm)(size_t offset, const void *data, size_t size); /*!< Function to read from NVM */
