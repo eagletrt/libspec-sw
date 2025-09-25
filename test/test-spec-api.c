@@ -109,7 +109,7 @@ void check_spec_get_with_null_handler(void) {
     TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_get(NULL, CONFIG_I8, &data, sizeof(DEFAULT_I8)));
 }
 
-void check_spec_get_with_null_var(void) {
+void check_spec_get_with_null_variable(void) {
     TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_get(&hspec, CONFIG_I8, NULL, sizeof(DEFAULT_I8)));
 }
 
@@ -200,7 +200,7 @@ void check_spec_set_with_null_handler(void) {
     TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_set(NULL, CONFIG_I8, &data, sizeof(DEFAULT_I8)));
 }
 
-void check_spec_set_with_null_var(void) {
+void check_spec_set_with_null_variable(void) {
     TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_set(&hspec, CONFIG_I8, NULL, sizeof(DEFAULT_I8)));
 }
 
@@ -286,7 +286,7 @@ int main(void) {
      */
 
     RUN_TEST(check_spec_get_with_null_handler);
-    RUN_TEST(check_spec_get_with_null_var);
+    RUN_TEST(check_spec_get_with_null_variable);
     RUN_TEST(check_spec_get_with_wrong_type);
     RUN_TEST(check_spec_get_with_wrong_index);
     RUN_TEST(check_spec_get_with_int8_parameter);
@@ -308,7 +308,7 @@ int main(void) {
      */
 
     RUN_TEST(check_spec_set_with_null_handler);
-    RUN_TEST(check_spec_set_with_null_var);
+    RUN_TEST(check_spec_set_with_null_variable);
     RUN_TEST(check_spec_set_with_wrong_type);
     RUN_TEST(check_spec_set_with_wrong_index);
     RUN_TEST(check_spec_set_with_int8_parameter);

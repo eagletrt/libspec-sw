@@ -25,6 +25,25 @@
 #include <stdint.h>
 
 /*!
+ * \brief           Configuration magic number.
+ */
+static const uint32_t SPEC_MAGIC_NUM = 0xB16B00B5U;
+
+/*!
+ * \brief           A dummy read function.
+ */
+static SpecReturnCode_t prv_spec_api_dummy_read(size_t offset, void *data, size_t size) {
+    return SPEC_OK;
+}
+
+/*!
+ * \brief           A dummy write function.
+ */
+static SpecReturnCode_t prv_spec_api_dummy_write(size_t offset, const void *data, size_t size) {
+    return SPEC_OK;
+}
+
+/*!
  * \brief           Check if there is a configuration saved in memory by
  *                  reading a magic number, if there any.
  *
@@ -32,21 +51,13 @@
  * \return          true if present, false otherwise.
  */
 static bool prv_spec_api_check_magic_number(const SpecHandler_t *hspec) {
-    return false;
-}
+    uint32_t magic_num = 0U;
+    SpecReturnCode_t ret = hspec->read_nvm(0U, &magic_num, sizeof(magic_num));
+    if (ret != SPEC_OK) {
+        return false;
+    }
 
-/*!
- * \brief           A dummy read function.
- */
-static SpecReturnCode_t prv_spec_dummy_read(size_t offset, void *data, size_t size) {
-    return SPEC_OK;
-}
-
-/*!
- * \brief           A dummy write function.
- */
-static SpecReturnCode_t prv_spec_dummy_write(size_t offset, const void *data, size_t size) {
-    return SPEC_OK;
+    return magic_num == SPEC_MAGIC_NUM;
 }
 
 SpecReturnCode_t spec_api_init(SpecHandler_t *hspec,
@@ -60,15 +71,15 @@ SpecReturnCode_t spec_api_init(SpecHandler_t *hspec,
     }
 
     hspec->param_count = param_count;
-    hspec->read_nvm = read_nvm == NULL ? prv_spec_dummy_read : read_nvm;
-    hspec->write_nvm = write_nvm == NULL ? prv_spec_dummy_write : write_nvm;
+    hspec->read_nvm = read_nvm == NULL ? prv_spec_api_dummy_read : read_nvm;
+    hspec->write_nvm = write_nvm == NULL ? prv_spec_api_dummy_write : write_nvm;
     hspec->param_data = arena_allocator_api_calloc(harena, sizeof(SpecParameter_t), param_count);
     if (hspec->param_data == NULL) {
         return SPEC_NULL_PTR;
     }
 
-    size_t size = 0;
-    for (size_t i = 0; i < param_count; ++i) {
+    size_t size = 0U;
+    for (size_t i = 0U; i < param_count; ++i) {
         hspec->param_data[i].data = arena_allocator_api_alloc(harena, param_data[i].size);
         if (hspec->param_data[i].data == NULL) {
             return SPEC_NULL_PTR;
@@ -86,8 +97,18 @@ SpecReturnCode_t spec_api_load(SpecHandler_t *hspec) {
         return SPEC_NULL_PTR;
     }
 
-    if (prv_spec_api_check_magic_number(hspec)) {
+    if (!prv_spec_api_check_magic_number(hspec)) {
         return SPEC_NO_CONFIG;
+    }
+
+    size_t offset = sizeof(SPEC_MAGIC_NUM);
+    for (size_t i = 0U; i < hspec->param_count; ++i) {
+        SpecReturnCode_t ret = hspec->read_nvm(offset, hspec->param_data[i].data, hspec->param_data[i].size);
+        if (ret != SPEC_OK) {
+            return ret;
+        }
+
+        offset += hspec->param_data[i].size;
     }
 
     return SPEC_OK;
@@ -96,6 +117,23 @@ SpecReturnCode_t spec_api_load(SpecHandler_t *hspec) {
 SpecReturnCode_t spec_api_store(const SpecHandler_t *hspec) {
     if (hspec == NULL) {
         return SPEC_NULL_PTR;
+    }
+
+    if (!prv_spec_api_check_magic_number(hspec)) {
+        SpecReturnCode_t ret = hspec->write_nvm(0U, (void *)&SPEC_MAGIC_NUM, sizeof(SPEC_MAGIC_NUM));
+        if (ret != SPEC_OK) {
+            return ret;
+        }
+    }
+
+    size_t offset = sizeof(SPEC_MAGIC_NUM);
+    for (size_t i = 0U; i < hspec->param_count; ++i) {
+        SpecReturnCode_t ret = hspec->write_nvm(offset, hspec->param_data[i].data, hspec->param_data[i].size);
+        if (ret != SPEC_OK) {
+            return ret;
+        }
+
+        offset += hspec->param_data[i].size;
     }
 
     return SPEC_OK;
