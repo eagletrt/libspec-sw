@@ -17,6 +17,7 @@
  *                  to be deallocated by using the arena allocator.
  */
 
+#include <stdio.h>
 #include <stdbool.h>
 
 #include "unity.h"
@@ -70,13 +71,82 @@ const SpecParameter_t DEFAULT_CONFIG[CONFIG_LEN] = {
 ArenaAllocatorHandler_t harena;
 SpecHandler_t hspec;
 
+void nvm_wipe_copy(void) {
+    FILE *fp = fopen("./free-nvm.bin", "wb");
+    fclose(fp);
+}
+
 void setUp(void) {
     arena_allocator_api_init(&harena);
     spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, NULL, NULL);
+    nvm_wipe_copy();
 }
 
 void tearDown(void) {
     arena_allocator_api_free(&harena);
+}
+
+SpecReturnCode_t read_empty_nvm(size_t offset, void *data, size_t size) {
+    if (data == NULL) {
+        return SPEC_NULL_PTR;
+    }
+
+    FILE *fp = fopen("./free-nvm.bin", "rb");
+    if (fp == NULL) {
+        return SPEC_IO_ERR;
+    }
+
+    if (fseek(fp, offset, SEEK_SET) == -1) {
+        return SPEC_IO_ERR;
+    }
+
+    if (fread(data, size, 1, fp) == -1) {
+        return SPEC_IO_ERR;
+    }
+
+    return SPEC_OK;
+}
+
+SpecReturnCode_t read_nvm(size_t offset, void *data, size_t size) {
+    if (data == NULL) {
+        return SPEC_NULL_PTR;
+    }
+
+    FILE *fp = fopen("./nvm.bin", "rb");
+    if (fp == NULL) {
+        return SPEC_IO_ERR;
+    }
+
+    if (fseek(fp, offset, SEEK_SET) == -1) {
+        return SPEC_IO_ERR;
+    }
+
+    if (fread(data, size, 1, fp) == -1) {
+        return SPEC_IO_ERR;
+    }
+
+    return SPEC_OK;
+}
+
+SpecReturnCode_t write_nvm(size_t offset, const void *data, size_t size) {
+    if (data == NULL) {
+        return SPEC_NULL_PTR;
+    }
+
+    FILE *fp = fopen("./nvm-copy.bin", "ab");
+    if (fp == NULL) {
+        return SPEC_IO_ERR;
+    }
+
+    if (fseek(fp, offset, SEEK_SET) == -1) {
+        return SPEC_IO_ERR;
+    }
+
+    if (fwrite(data, size, 1, fp) == -1) {
+        return SPEC_IO_ERR;
+    }
+
+    return SPEC_OK;
 }
 
 /*!
@@ -95,6 +165,33 @@ void check_spec_init_null_arena_handler(void) {
 void check_spec_init_null_parameters(void) {
     SpecHandler_t hspec_loc;
     TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_init(&hspec_loc, &harena, NULL, CONFIG_LEN, NULL, NULL));
+}
+
+/*! @} */
+
+/*!
+ * \defgroup        spec_load Test SPEC get function.
+ * @{
+ */
+
+void check_spec_load_with_null_handler(void) {
+    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_load(NULL));
+}
+
+void check_spec_load_with_empty_nvm(void) {
+    spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, read_empty_nvm, NULL);
+    TEST_ASSERT_EQUAL_INT(SPEC_NO_CONFIG, spec_api_load(&hspec));
+}
+
+/*! @} */
+
+/*!
+ * \defgroup        spec_store Test SPEC get function.
+ * @{
+ */
+
+void check_spec_store_with_null_handler(void) {
+    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_store(NULL));
 }
 
 /*! @} */
@@ -277,6 +374,16 @@ int main(void) {
     RUN_TEST(check_spec_init_null_spec_handler);
     RUN_TEST(check_spec_init_null_arena_handler);
     RUN_TEST(check_spec_init_null_parameters);
+
+    /*! @} */
+
+    /*!
+     * \defgroup        spec_load Test SPEC get function.
+     * @{
+     */
+
+    RUN_TEST(check_spec_load_with_null_handler);
+    RUN_TEST(check_spec_load_with_empty_nvm);
 
     /*! @} */
 
