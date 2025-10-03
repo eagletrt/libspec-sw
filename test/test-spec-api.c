@@ -18,6 +18,8 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
 
 #include "unity.h"
@@ -25,6 +27,8 @@
 #include "arena-allocator-api.h"
 #include "spec.h"
 #include "spec-api.h"
+
+#define NVM_SIZE 0xFFFU
 
 /*!
  * \brief           Enumeration with all configuration parameters.
@@ -43,7 +47,6 @@ typedef enum ConfigParameters {
     CONFIG_LEN
 } ConfigParameters_t;
 
-/*! CONSTANTS */
 const int8_t DEFAULT_I8 = 0xD6;
 const int8_t DEFAULT_U8 = 0xC4;
 const int16_t DEFAULT_I16 = 0xCFC7;
@@ -67,86 +70,89 @@ const SpecParameter_t DEFAULT_CONFIG[CONFIG_LEN] = {
     { .data = (void *)&DEFAULT_BOOL, .size = sizeof(DEFAULT_BOOL) }
 };
 
-/*! GLOBAL VAR. */
 ArenaAllocatorHandler_t harena;
 SpecHandler_t hspec;
+uint8_t fake_nvm[NVM_SIZE] = { 0 };
+uint8_t fake_nvm_copy[NVM_SIZE] = { 0 };
 
-void nvm_wipe_copy(void) {
-    FILE *fp = fopen("./free-nvm.bin", "wb");
-    fclose(fp);
+void init_fake_nvm(void) {
+    uint32_t magic_num = 0xB16B00B5U;
+    memcpy(fake_nvm, &magic_num, sizeof(magic_num));
+    size_t offset = sizeof(magic_num);
+    for (size_t i = 0; i < CONFIG_LEN; i++) {
+        memcpy(&fake_nvm[offset], DEFAULT_CONFIG[i].data, DEFAULT_CONFIG[i].size);
+        offset += DEFAULT_CONFIG[i].size;
+    }
+}
+
+SpecReturnCode_t read_nvm_array(size_t offset, void *data, size_t size) {
+    if (data == NULL)
+        return SPEC_NULL_PTR;
+
+    if (offset + size > NVM_SIZE)
+        return SPEC_IO_ERR;
+
+    memcpy(data, &fake_nvm[offset], size);
+    return SPEC_OK;
+}
+
+SpecReturnCode_t read_empty_nvm_array(size_t offset, void *data, size_t size) {
+    if (data == NULL)
+        return SPEC_NULL_PTR;
+
+    if (offset + size > NVM_SIZE)
+        return SPEC_IO_ERR;
+
+    memset(data, 0xFF, size);
+    return SPEC_OK;
+}
+
+SpecReturnCode_t write_nvm_array(size_t offset, const void *data, size_t size) {
+    if (data == NULL)
+        return SPEC_NULL_PTR;
+
+    if (offset + size > NVM_SIZE)
+        return SPEC_IO_ERR;
+
+    memcpy(&fake_nvm_copy[offset], data, size);
+    return SPEC_OK;
+}
+
+int diff_arrays(const uint8_t *a, const uint8_t *b, size_t len) {
+    return memcmp(a, b, len);
+}
+
+bool is_cfg_equal(const SpecHandler_t *hspec, const SpecParameter_t *cfg, size_t param_count) {
+    if (hspec == NULL || cfg == NULL)
+        return false;
+
+    if (hspec->param_count != param_count)
+        return false;
+
+    for (size_t i = 0; i < param_count; ++i) {
+        const SpecParameter_t *a = &hspec->param_data[i];
+        const SpecParameter_t *b = &cfg[i];
+
+        if (a->size != b->size)
+            return false;
+
+        if (a->data == NULL || b->data == NULL)
+            return false;
+
+        if (memcmp(a->data, b->data, a->size) != 0)
+            return false;
+    }
+
+    return true;
 }
 
 void setUp(void) {
     arena_allocator_api_init(&harena);
     spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, NULL, NULL);
-    nvm_wipe_copy();
 }
 
 void tearDown(void) {
     arena_allocator_api_free(&harena);
-}
-
-SpecReturnCode_t read_empty_nvm(size_t offset, void *data, size_t size) {
-    if (data == NULL) {
-        return SPEC_NULL_PTR;
-    }
-
-    FILE *fp = fopen("./free-nvm.bin", "rb");
-    if (fp == NULL) {
-        return SPEC_IO_ERR;
-    }
-
-    if (fseek(fp, offset, SEEK_SET) == -1) {
-        return SPEC_IO_ERR;
-    }
-
-    if (fread(data, size, 1, fp) == -1) {
-        return SPEC_IO_ERR;
-    }
-
-    return SPEC_OK;
-}
-
-SpecReturnCode_t read_nvm(size_t offset, void *data, size_t size) {
-    if (data == NULL) {
-        return SPEC_NULL_PTR;
-    }
-
-    FILE *fp = fopen("./nvm.bin", "rb");
-    if (fp == NULL) {
-        return SPEC_IO_ERR;
-    }
-
-    if (fseek(fp, offset, SEEK_SET) == -1) {
-        return SPEC_IO_ERR;
-    }
-
-    if (fread(data, size, 1, fp) == -1) {
-        return SPEC_IO_ERR;
-    }
-
-    return SPEC_OK;
-}
-
-SpecReturnCode_t write_nvm(size_t offset, const void *data, size_t size) {
-    if (data == NULL) {
-        return SPEC_NULL_PTR;
-    }
-
-    FILE *fp = fopen("./nvm-copy.bin", "ab");
-    if (fp == NULL) {
-        return SPEC_IO_ERR;
-    }
-
-    if (fseek(fp, offset, SEEK_SET) == -1) {
-        return SPEC_IO_ERR;
-    }
-
-    if (fwrite(data, size, 1, fp) == -1) {
-        return SPEC_IO_ERR;
-    }
-
-    return SPEC_OK;
 }
 
 /*!
@@ -179,8 +185,16 @@ void check_spec_load_with_null_handler(void) {
 }
 
 void check_spec_load_with_empty_nvm(void) {
-    spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, read_empty_nvm, NULL);
+    spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, read_empty_nvm_array, NULL);
     TEST_ASSERT_EQUAL_INT(SPEC_NO_CONFIG, spec_api_load(&hspec));
+}
+
+void check_spec_load_with_right_nvm(void) {
+
+    spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, read_nvm_array, NULL);
+
+    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_load(&hspec));
+    TEST_ASSERT_TRUE(is_cfg_equal(&hspec, DEFAULT_CONFIG, CONFIG_LEN));
 }
 
 /*! @} */
@@ -192,6 +206,13 @@ void check_spec_load_with_empty_nvm(void) {
 
 void check_spec_store_with_null_handler(void) {
     TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_store(NULL));
+}
+
+void check_spec_store_with_right_nvm(void) {
+    spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, NULL, write_nvm_array);
+
+    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_store(&hspec));
+    TEST_ASSERT_EQUAL_INT(0, diff_arrays(fake_nvm, fake_nvm_copy, CONFIG_LEN * sizeof(SpecParameter_t)));
 }
 
 /*! @} */
@@ -364,6 +385,7 @@ void check_spec_set_with_bool_parameter(void) {
 /*! @} */
 
 int main(void) {
+    init_fake_nvm();
     UNITY_BEGIN();
 
     /*!
@@ -384,6 +406,17 @@ int main(void) {
 
     RUN_TEST(check_spec_load_with_null_handler);
     RUN_TEST(check_spec_load_with_empty_nvm);
+    RUN_TEST(check_spec_load_with_right_nvm);
+
+    /*! @} */
+
+    /*!
+     * \defgroup        spec_store Test SPEC get function.
+     * @{
+     */
+
+    RUN_TEST(check_spec_store_with_null_handler);
+    RUN_TEST(check_spec_store_with_right_nvm);
 
     /*! @} */
 

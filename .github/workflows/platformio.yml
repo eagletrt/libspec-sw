@@ -1,0 +1,35 @@
+name: PlatformIO CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test: [./test/test-spec-api.c, ./test]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      # - name: Run static analysis
+      #   run: pio check
+
+      - name: Run unit tests
+        run: pio test -e native
+
+      # - name: Build PlatformIO examples
+      #   run: pio ci --board=disco_h747xi --board=genericSTM32F446RE --exclude=src/test --exclude=src/examples -O "framework=stm32cube"
+      #   env:
+      #     PLATFORMIO_CI_SRC: ${{ matrix.example }}
