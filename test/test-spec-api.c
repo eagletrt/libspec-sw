@@ -57,7 +57,7 @@ const int64_t DEFAULT_I64 = 0xC1C1C1C1C1C1C1C1;
 const int64_t DEFAULT_U64 = 0xFFFFFFFFFFFFFFFF;
 const float DEFAULT_FLOAT = 3.14;
 const bool DEFAULT_BOOL = false;
-const SpecParameter_t DEFAULT_CONFIG[CONFIG_LEN] = {
+const struct SpecParameter DEFAULT_CONFIG[CONFIG_LEN] = {
     { .data = (void *)&DEFAULT_I8, .size = sizeof(DEFAULT_I8) },
     { .data = (void *)&DEFAULT_U8, .size = sizeof(DEFAULT_U8) },
     { .data = (void *)&DEFAULT_I16, .size = sizeof(DEFAULT_I16) },
@@ -71,7 +71,7 @@ const SpecParameter_t DEFAULT_CONFIG[CONFIG_LEN] = {
 };
 
 ArenaAllocatorHandler_t harena;
-SpecHandler_t hspec;
+struct SpecHandler hspec;
 uint8_t fake_nvm[NVM_SIZE] = { 0 };
 uint8_t fake_nvm_copy[NVM_SIZE] = { 0 };
 
@@ -85,44 +85,44 @@ void init_fake_nvm(void) {
     }
 }
 
-SpecReturnCode_t read_nvm_array(size_t offset, void *data, size_t size) {
+enum SpecReturnCode read_nvm_array(size_t offset, void *data, size_t size) {
     if (data == NULL)
-        return SPEC_NULL_PTR;
+        return SPEC_RC_NULL_PTR;
 
     if (offset + size > NVM_SIZE)
-        return SPEC_IO_ERR;
+        return SPEC_RC_IO_ERR;
 
     memcpy(data, &fake_nvm[offset], size);
-    return SPEC_OK;
+    return SPEC_RC_OK;
 }
 
-SpecReturnCode_t read_empty_nvm_array(size_t offset, void *data, size_t size) {
+enum SpecReturnCode read_empty_nvm_array(size_t offset, void *data, size_t size) {
     if (data == NULL)
-        return SPEC_NULL_PTR;
+        return SPEC_RC_NULL_PTR;
 
     if (offset + size > NVM_SIZE)
-        return SPEC_IO_ERR;
+        return SPEC_RC_IO_ERR;
 
     memset(data, 0xFF, size);
-    return SPEC_OK;
+    return SPEC_RC_OK;
 }
 
-SpecReturnCode_t write_nvm_array(size_t offset, const void *data, size_t size) {
+enum SpecReturnCode write_nvm_array(size_t offset, const void *data, size_t size) {
     if (data == NULL)
-        return SPEC_NULL_PTR;
+        return SPEC_RC_NULL_PTR;
 
     if (offset + size > NVM_SIZE)
-        return SPEC_IO_ERR;
+        return SPEC_RC_IO_ERR;
 
     memcpy(&fake_nvm_copy[offset], data, size);
-    return SPEC_OK;
+    return SPEC_RC_OK;
 }
 
 int diff_arrays(const uint8_t *a, const uint8_t *b, size_t len) {
     return memcmp(a, b, len);
 }
 
-bool is_cfg_equal(const SpecHandler_t *hspec, const SpecParameter_t *cfg, size_t param_count) {
+bool is_cfg_equal(const struct SpecHandler *hspec, const struct SpecParameter *cfg, size_t param_count) {
     if (hspec == NULL || cfg == NULL)
         return false;
 
@@ -130,8 +130,8 @@ bool is_cfg_equal(const SpecHandler_t *hspec, const SpecParameter_t *cfg, size_t
         return false;
 
     for (size_t i = 0; i < param_count; ++i) {
-        const SpecParameter_t *a = &hspec->param_data[i];
-        const SpecParameter_t *b = &cfg[i];
+        const struct SpecParameter *a = &hspec->param_data[i];
+        const struct SpecParameter *b = &cfg[i];
 
         if (a->size != b->size)
             return false;
@@ -161,16 +161,16 @@ void tearDown(void) {
  */
 
 void check_spec_init_null_spec_handler(void) {
-    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_init(NULL, &harena, DEFAULT_CONFIG, CONFIG_LEN, NULL, NULL));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_init(NULL, &harena, DEFAULT_CONFIG, CONFIG_LEN, NULL, NULL));
 }
 
 void check_spec_init_null_arena_handler(void) {
-    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_init(&hspec, NULL, DEFAULT_CONFIG, CONFIG_LEN, NULL, NULL));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_init(&hspec, NULL, DEFAULT_CONFIG, CONFIG_LEN, NULL, NULL));
 }
 
 void check_spec_init_null_parameters(void) {
-    SpecHandler_t hspec_loc;
-    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_init(&hspec_loc, &harena, NULL, CONFIG_LEN, NULL, NULL));
+    struct SpecHandler hspec_loc;
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_init(&hspec_loc, &harena, NULL, CONFIG_LEN, NULL, NULL));
 }
 
 /*! @} */
@@ -181,19 +181,18 @@ void check_spec_init_null_parameters(void) {
  */
 
 void check_spec_load_with_null_handler(void) {
-    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_load(NULL));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_load(NULL));
 }
 
 void check_spec_load_with_empty_nvm(void) {
     spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, read_empty_nvm_array, NULL);
-    TEST_ASSERT_EQUAL_INT(SPEC_NO_CONFIG, spec_api_load(&hspec));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NO_CONFIG, spec_api_load(&hspec));
 }
 
 void check_spec_load_with_right_nvm(void) {
-
     spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, read_nvm_array, NULL);
 
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_load(&hspec));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_OK, spec_api_load(&hspec));
     TEST_ASSERT_TRUE(is_cfg_equal(&hspec, DEFAULT_CONFIG, CONFIG_LEN));
 }
 
@@ -205,14 +204,14 @@ void check_spec_load_with_right_nvm(void) {
  */
 
 void check_spec_store_with_null_handler(void) {
-    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_store(NULL));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_store(NULL));
 }
 
 void check_spec_store_with_right_nvm(void) {
     spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, NULL, write_nvm_array);
 
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_store(&hspec));
-    TEST_ASSERT_EQUAL_INT(0, diff_arrays(fake_nvm, fake_nvm_copy, CONFIG_LEN * sizeof(SpecParameter_t)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_OK, spec_api_store(&hspec));
+    TEST_ASSERT_EQUAL_INT(0, diff_arrays(fake_nvm, fake_nvm_copy, CONFIG_LEN * sizeof(struct SpecParameter)));
 }
 
 /*! @} */
@@ -224,21 +223,21 @@ void check_spec_store_with_right_nvm(void) {
 
 void check_spec_get_with_null_handler(void) {
     int8_t data;
-    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_get(NULL, CONFIG_I8, &data, sizeof(DEFAULT_I8)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_get(NULL, CONFIG_I8, &data, sizeof(DEFAULT_I8)));
 }
 
 void check_spec_get_with_null_variable(void) {
-    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_get(&hspec, CONFIG_I8, NULL, sizeof(DEFAULT_I8)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_get(&hspec, CONFIG_I8, NULL, sizeof(DEFAULT_I8)));
 }
 
 void check_spec_get_with_wrong_type(void) {
     float data;
-    TEST_ASSERT_EQUAL_INT(SPEC_WRONG_SIZE, spec_api_get(&hspec, CONFIG_I8, &data, sizeof(DEFAULT_FLOAT)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_WRONG_SIZE, spec_api_get(&hspec, CONFIG_I8, &data, sizeof(DEFAULT_FLOAT)));
 }
 
 void check_spec_get_with_wrong_index(void) {
     int8_t data;
-    TEST_ASSERT_EQUAL_INT(SPEC_IDX_OUT_OF_BOUNDS, spec_api_get(&hspec, CONFIG_LEN, &data, sizeof(DEFAULT_I8)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_IDX_OUT_OF_BOUNDS, spec_api_get(&hspec, CONFIG_LEN, &data, sizeof(DEFAULT_I8)));
 }
 
 void check_spec_get_with_int8_parameter(void) {
@@ -315,71 +314,71 @@ void check_spec_get_with_bool_parameter(void) {
 
 void check_spec_set_with_null_handler(void) {
     int8_t data = 4;
-    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_set(NULL, CONFIG_I8, &data, sizeof(DEFAULT_I8)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_set(NULL, CONFIG_I8, &data, sizeof(DEFAULT_I8)));
 }
 
 void check_spec_set_with_null_variable(void) {
-    TEST_ASSERT_EQUAL_INT(SPEC_NULL_PTR, spec_api_set(&hspec, CONFIG_I8, NULL, sizeof(DEFAULT_I8)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_set(&hspec, CONFIG_I8, NULL, sizeof(DEFAULT_I8)));
 }
 
 void check_spec_set_with_wrong_type(void) {
     int8_t data = 0xFF;
-    TEST_ASSERT_EQUAL_INT(SPEC_WRONG_SIZE, spec_api_set(&hspec, CONFIG_FLOAT, &data, sizeof(DEFAULT_I8)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_WRONG_SIZE, spec_api_set(&hspec, CONFIG_FLOAT, &data, sizeof(DEFAULT_I8)));
 }
 
 void check_spec_set_with_wrong_index(void) {
     int8_t data = 0xFF;
-    TEST_ASSERT_EQUAL_INT(SPEC_IDX_OUT_OF_BOUNDS, spec_api_set(&hspec, CONFIG_LEN, &data, sizeof(DEFAULT_I8)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_IDX_OUT_OF_BOUNDS, spec_api_set(&hspec, CONFIG_LEN, &data, sizeof(DEFAULT_I8)));
 }
 
 void check_spec_set_with_int8_parameter(void) {
     int8_t data = 3;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_I8, &data, sizeof(DEFAULT_I8)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_OK, spec_api_set(&hspec, CONFIG_I8, &data, sizeof(DEFAULT_I8)));
 }
 
 void check_spec_set_with_uint8_parameter(void) {
     uint8_t data = 3;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_U8, &data, sizeof(DEFAULT_U8)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_OK, spec_api_set(&hspec, CONFIG_U8, &data, sizeof(DEFAULT_U8)));
 }
 
 void check_spec_set_with_int16_parameter(void) {
     int16_t data = 3;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_I16, &data, sizeof(DEFAULT_I16)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_OK, spec_api_set(&hspec, CONFIG_I16, &data, sizeof(DEFAULT_I16)));
 }
 
 void check_spec_set_with_uint16_parameter(void) {
     uint16_t data = 3;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_U16, &data, sizeof(DEFAULT_U16)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_OK, spec_api_set(&hspec, CONFIG_U16, &data, sizeof(DEFAULT_U16)));
 }
 
 void check_spec_set_with_int32_parameter(void) {
     int32_t data = 3;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_I32, &data, sizeof(DEFAULT_I32)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_OK, spec_api_set(&hspec, CONFIG_I32, &data, sizeof(DEFAULT_I32)));
 }
 
 void check_spec_set_with_uint32_parameter(void) {
     uint32_t data = 3;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_U32, &data, sizeof(DEFAULT_U32)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_OK, spec_api_set(&hspec, CONFIG_U32, &data, sizeof(DEFAULT_U32)));
 }
 
 void check_spec_set_with_int64_parameter(void) {
     int64_t data = 3;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_I64, &data, sizeof(DEFAULT_I64)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_OK, spec_api_set(&hspec, CONFIG_I64, &data, sizeof(DEFAULT_I64)));
 }
 
 void check_spec_set_with_uint64_parameter(void) {
     uint64_t data = 3;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_U64, &data, sizeof(DEFAULT_U64)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_OK, spec_api_set(&hspec, CONFIG_U64, &data, sizeof(DEFAULT_U64)));
 }
 
 void check_spec_set_with_float_parameter(void) {
     float data = 2.14;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_FLOAT, &data, sizeof(DEFAULT_FLOAT)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_OK, spec_api_set(&hspec, CONFIG_FLOAT, &data, sizeof(DEFAULT_FLOAT)));
 }
 
 void check_spec_set_with_bool_parameter(void) {
     bool data = true;
-    TEST_ASSERT_EQUAL_INT(SPEC_OK, spec_api_set(&hspec, CONFIG_BOOL, &data, sizeof(DEFAULT_BOOL)));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_OK, spec_api_set(&hspec, CONFIG_BOOL, &data, sizeof(DEFAULT_BOOL)));
 }
 
 /*! @} */
