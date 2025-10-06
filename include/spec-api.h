@@ -29,6 +29,7 @@
  * \param[out]      hspec: The configuration handler structure.
  * \param[in]       harena: The arena allocator handler structure.
  * \param[in]       param_data: An array of SPEC parameters.
+ * \param[in]       param_count: The number of parameters.
  * \param[in]       read_nvm: The function used to read from NVM.
  * \param[in]       write_nvm: The function used to write into NVM.
  * \return          SPEC_RC_OK on success, SPEC_RC_NULL_PTR otherwise.

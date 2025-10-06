@@ -35,17 +35,28 @@ enum SpecReturnCode {
     SPEC_RC_IO_ERR             /*!< I/O related error */
 };
 
+/*!
+ * \brief           Type definition for a function pointer for reading data from NVM.
+ *
+ * \param[in]       offset: Offset in the NVM from which to read data.
+ * \param[out]      data: Pointer to the buffer where the data will be stored.
+ * \param[in]       size: Size of the data to read.
+ * \return          SPEC_RC_OK on success, SPEC_RC_NULL_PTR if data is NULL,
+ *                  SEPC_RC_IO_ERR otherwise
+ */
 typedef enum SpecReturnCode (*spec_read_fn)(size_t offset, void *data, size_t size);
 
+/*!
+ * \brief           Type definition for a function pointer for writing data to NVM.
+ *
+ * \param[in]       offset: Offset in the NVM where data will be written.
+ * \param[in]       data: Pointer to the data to be written to NVM.
+ * \param[in]       size: Size of the data to write.
+ * \return          SPEC_RC_OK on success, SPEC_RC_NULL_PTR if data is NULL,
+ *                  SEPC_RC_IO_ERR otherwise
+ */
 typedef enum SpecReturnCode (*spec_write_fn)(size_t offset, const void *data, size_t size);
 
-/*!
- * \brief           A structure representing a configuration parameter.
- *
- * \description     An helper structure used to give a default configuration
- *                  to the handler via \ref spec_api_init function. It also
- *                  describes the structure of the configuration.
- */
 struct SpecParameter {
     void *data;  /*!< Parameter's data */
     size_t size; /*!< The data size */

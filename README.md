@@ -1,7 +1,7 @@
 
 # Simple Persistent Embedded Configurator (S.P.E.C.)
-This library provides a simple way to manage load, store and change MCUs
-configuration parameters run-time.
+This library provides a simple way to load, store and change MCUs configuration
+parameters run-time.
 
 ## Dependencies
 This library relies on the [ArenaAllocator](https://github.com/eagletrt/libarena-allocator-sw.git) for memory management. Make sure to 
@@ -14,9 +14,9 @@ using `struct SpecHandler` and initialize it by using the `spec_api_init()` func
 
 ```c
 const struct SpecParameter DEFAULT_CFG[3U] = {
-	{ .data = (int8_t[]){0x1F}, .size = 1U},
-	{ .data = (int8_t[]){0x2F}, .size = 1U},
-	{ .data = (int8_t[]){0x3F}, .size = 1U},
+	{ .data = (int8_t[]){0x1F}, .size = 1U },
+	{ .data = (int8_t[]){0x2F}, .size = 1U },
+	{ .data = (int8_t[]){0x3F}, .size = 1U },
 };
 
 ArenaAllocatorHandler_t arena;
