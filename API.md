@@ -224,7 +224,7 @@ enum SpecReturnCode spec_api_get(const struct SpecHandler *hspec,
 ```
 
 #### Description:
-> Stores the configuration into the NVM.
+> Set the value of the parameter at idx position.
 
 #### Function Parameters
 > | Parameter | Type                         | Description                                     |

@@ -75,7 +75,7 @@ enum SpecReturnCode spec_api_store(const struct SpecHandler *hspec);
 enum SpecReturnCode spec_api_get(const struct SpecHandler *hspec, size_t idx, void *out, size_t size);
 
 /*!
- * \brief           Get a copy of the parameter at idx position.
+ * \brief           Set the value of the parameter at idx position.
  *
  * \param[out]      hspec: The configuration handler structure.
  * \param[in]       idx: The parameter position.
