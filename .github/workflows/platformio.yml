@@ -27,7 +27,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
@@ -35,9 +35,8 @@ jobs:
       - name: Run Unit Tests (or generate minimal .ini)
         run: |
           if [ ! -f "platformio.ini" ]; then
-            echo "[env:latest_stable]" > platformio.ini
-            echo "platform = native" >> platformio.ini
-            echo "lib_deps = Unity ./" >> platformio.ini
+            printf "[env:latest_stable]\nplatform = native\nlib_deps = Unity, ./\n" > platformio.ini
+            echo "Created platformio.ini"
           fi
           pio test -e latest_stable
 
@@ -66,7 +65,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
@@ -74,8 +73,7 @@ jobs:
       - name: Run Static Code Analysis
         run: |
           if [ ! -f "platformio.ini" ]; then
-            echo "[env:latest_stable]" > platformio.ini
-            echo "platform = native" >> platformio.ini
-            echo "lib_deps = Unity ./" >> platformio.ini
+            printf "[env:latest_stable]\nplatform = native\nlib_deps = Unity, ./\n" > platformio.ini
+            echo "Created platformio.ini"
           fi
           pio check
