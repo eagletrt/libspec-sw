@@ -26,26 +26,41 @@
 /*!
  * \brief           Enumeration with all possible return code of the library.
  */
-typedef enum SpecReturnCode {
-    SPEC_OK,                /*!< Everything is fine */
-    SPEC_NULL_PTR,          /*!< Unexpected NULL pointer detected */
-    SPEC_IDX_OUT_OF_BOUNDS, /*!< The given index exceeds its bounds */
-    SPEC_WRONG_SIZE,        /*!< Data size mismatch */
-    SPEC_NO_CONFIG,         /*!< No configuration stored */
-    SPEC_IO_ERR             /*!< I/O related error */
-} SpecReturnCode_t;
+enum SpecReturnCode {
+    SPEC_RC_OK,                /*!< Everything is fine */
+    SPEC_RC_NULL_PTR,          /*!< Unexpected NULL pointer detected */
+    SPEC_RC_IDX_OUT_OF_BOUNDS, /*!< The given index exceeds its bounds */
+    SPEC_RC_WRONG_SIZE,        /*!< Data size mismatch */
+    SPEC_RC_NO_CONFIG,         /*!< No configuration stored */
+    SPEC_RC_IO_ERR             /*!< I/O related error */
+};
 
 /*!
- * \brief           A structure representing a configuration parameter.
+ * \brief           Type definition for a function pointer for reading data from NVM.
  *
- * \description     An helper structure used to give a default configuration
- *                  to the handler via \ref spec_api_init function. It also
- *                  describes the structure of the configuration.
+ * \param[in]       offset: Offset in the NVM from which to read data.
+ * \param[out]      data: Pointer to the buffer where the data will be stored.
+ * \param[in]       size: Size of the data to read.
+ * \return          SPEC_RC_OK on success, SPEC_RC_NULL_PTR if data is NULL,
+ *                  SEPC_RC_IO_ERR otherwise
  */
-typedef struct SpecParameter {
+typedef enum SpecReturnCode (*spec_read_fn)(size_t offset, void *data, size_t size);
+
+/*!
+ * \brief           Type definition for a function pointer for writing data to NVM.
+ *
+ * \param[in]       offset: Offset in the NVM where data will be written.
+ * \param[in]       data: Pointer to the data to be written to NVM.
+ * \param[in]       size: Size of the data to write.
+ * \return          SPEC_RC_OK on success, SPEC_RC_NULL_PTR if data is NULL,
+ *                  SEPC_RC_IO_ERR otherwise
+ */
+typedef enum SpecReturnCode (*spec_write_fn)(size_t offset, const void *data, size_t size);
+
+struct SpecParameter {
     void *data;  /*!< Parameter's data */
     size_t size; /*!< The data size */
-} SpecParameter_t;
+};
 
 /*!
  * \brief           A structure that encapsulate data, functions and all
@@ -53,11 +68,11 @@ typedef struct SpecParameter {
  *
  * \attention       This structure should not be used directly.
  */
-typedef struct SpecHandler {
-    SpecParameter_t *param_data;                                                 /*!< The configuration data */
-    size_t param_count;                                                          /*!< The number of parameters */
-    SpecReturnCode_t (*read_nvm)(size_t offset, void *data, size_t size);        /*!< Function to write on NVM */
-    SpecReturnCode_t (*write_nvm)(size_t offset, const void *data, size_t size); /*!< Function to read from NVM */
-} SpecHandler_t;
+struct SpecHandler {
+    struct SpecParameter *param_data; /*!< The configuration data */
+    size_t param_count;               /*!< The number of parameters */
+    spec_read_fn read_nvm;            /*!< Function to write on NVM */
+    spec_write_fn write_nvm;          /*!< Function to read from NVM */
+};
 
 #endif /* SPEC_H */
