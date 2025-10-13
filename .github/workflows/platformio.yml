@@ -2,10 +2,11 @@ name: PlatformIO CI
 
 on:
   push:
-    branches: [ * ]
   pull_request:
-    branches: [ dev ]
-    types: [ closed ]
+    branches:
+      - dev
+    types:
+      - closed
 
 jobs:
   test:
