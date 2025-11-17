@@ -78,7 +78,6 @@ enum SpecReturnCode spec_api_init(struct SpecHandler *hspec,
         return SPEC_RC_NULL_PTR;
     }
 
-    size_t size = 0U;
     for (size_t i = 0U; i < param_count; ++i) {
         hspec->param_data[i].data = arena_allocator_api_alloc(harena, param_data[i].size);
         if (hspec->param_data[i].data == NULL) {
@@ -87,6 +86,9 @@ enum SpecReturnCode spec_api_init(struct SpecHandler *hspec,
         hspec->param_data[i].size = param_data[i].size;
 
         enum SpecReturnCode ret = spec_api_set(hspec, i, param_data[i].data, param_data[i].size);
+        if (ret != SPEC_RC_OK) {
+            return ret;
+        }
     }
 
     return SPEC_RC_OK;
