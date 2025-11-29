@@ -17,7 +17,6 @@
  *                  to be deallocated by using the arena allocator.
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -29,6 +28,7 @@
 #include "spec-api.h"
 
 #define NVM_SIZE 0xFFFU
+#define MAGIC_NUM 0xB16B00B5U
 
 /*!
  * \brief           Enumeration with all configuration parameters.
@@ -76,7 +76,7 @@ uint8_t fake_nvm[NVM_SIZE] = { 0 };
 uint8_t fake_nvm_copy[NVM_SIZE] = { 0 };
 
 void init_fake_nvm(void) {
-    uint32_t magic_num = 0xB16B00B5U;
+    uint32_t magic_num = MAGIC_NUM;
     memcpy(fake_nvm, &magic_num, sizeof(magic_num));
     size_t offset = sizeof(magic_num);
     for (size_t i = 0; i < CONFIG_LEN; i++) {
@@ -118,37 +118,11 @@ enum SpecReturnCode write_nvm_array(size_t offset, const void *data, size_t size
     return SPEC_RC_OK;
 }
 
-int diff_arrays(const uint8_t *a, const uint8_t *b, size_t len) {
-    return memcmp(a, b, len);
-}
-
-bool is_cfg_equal(const struct SpecHandler *hspec, const struct SpecParameter *cfg, size_t param_count) {
-    if (hspec == NULL || cfg == NULL)
-        return false;
-
-    if (hspec->param_count != param_count)
-        return false;
-
-    for (size_t i = 0; i < param_count; ++i) {
-        const struct SpecParameter *a = &hspec->param_data[i];
-        const struct SpecParameter *b = &cfg[i];
-
-        if (a->size != b->size)
-            return false;
-
-        if (a->data == NULL || b->data == NULL)
-            return false;
-
-        if (memcmp(a->data, b->data, a->size) != 0)
-            return false;
-    }
-
-    return true;
-}
-
 void setUp(void) {
+    init_fake_nvm();
+    memset(fake_nvm_copy, 0U, NVM_SIZE);
     arena_allocator_api_init(&harena);
-    spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, NULL, NULL);
+    spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, read_nvm_array, write_nvm_array, MAGIC_NUM);
 }
 
 void tearDown(void) {
@@ -161,16 +135,16 @@ void tearDown(void) {
  */
 
 void check_spec_init_null_spec_handler(void) {
-    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_init(NULL, &harena, DEFAULT_CONFIG, CONFIG_LEN, NULL, NULL));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_init(NULL, &harena, DEFAULT_CONFIG, CONFIG_LEN, NULL, NULL, MAGIC_NUM));
 }
 
 void check_spec_init_null_arena_handler(void) {
-    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_init(&hspec, NULL, DEFAULT_CONFIG, CONFIG_LEN, NULL, NULL));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_init(&hspec, NULL, DEFAULT_CONFIG, CONFIG_LEN, NULL, NULL, MAGIC_NUM));
 }
 
 void check_spec_init_null_parameters(void) {
     struct SpecHandler hspec_loc;
-    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_init(&hspec_loc, &harena, NULL, CONFIG_LEN, NULL, NULL));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_init(&hspec_loc, &harena, NULL, CONFIG_LEN, NULL, NULL, MAGIC_NUM));
 }
 
 /*! @} */
@@ -185,15 +159,20 @@ void check_spec_load_with_null_handler(void) {
 }
 
 void check_spec_load_with_empty_nvm(void) {
-    spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, read_empty_nvm_array, NULL);
+    hspec.read_nvm = read_empty_nvm_array;
     TEST_ASSERT_EQUAL_INT(SPEC_RC_NO_CONFIG, spec_api_load(&hspec));
 }
 
 void check_spec_load_with_right_nvm(void) {
-    spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, read_nvm_array, NULL);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(SPEC_RC_OK, spec_api_load(&hspec), "SPEC initialization failed!");
 
-    TEST_ASSERT_EQUAL_INT(SPEC_RC_OK, spec_api_load(&hspec));
-    TEST_ASSERT_TRUE(is_cfg_equal(&hspec, DEFAULT_CONFIG, CONFIG_LEN));
+    for (int i = 0; i < CONFIG_LEN; ++i)
+        TEST_ASSERT_EQUAL_MEMORY_MESSAGE(hspec.param_data[i].data, DEFAULT_CONFIG[i].data, hspec.param_data[i].size, "One configuration parameter is wrong!");
+}
+
+void check_spec_load_with_different_versions(void) {
+    hspec.magic_num = 0x128E57C;
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NO_CONFIG, spec_api_load(&hspec));
 }
 
 /*! @} */
@@ -208,10 +187,8 @@ void check_spec_store_with_null_handler(void) {
 }
 
 void check_spec_store_with_right_nvm(void) {
-    spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, NULL, write_nvm_array);
-
-    TEST_ASSERT_EQUAL_INT(SPEC_RC_OK, spec_api_store(&hspec));
-    TEST_ASSERT_EQUAL_INT(0, diff_arrays(fake_nvm, fake_nvm_copy, CONFIG_LEN * sizeof(struct SpecParameter)));
+    TEST_ASSERT_EQUAL_INT_MESSAGE(SPEC_RC_OK, spec_api_store(&hspec), "spec_api_store failed!");
+    TEST_ASSERT_EQUAL_UINT8_ARRAY_MESSAGE(fake_nvm, fake_nvm_copy, NVM_SIZE, "Stored configuration is different!");
 }
 
 /*! @} */
@@ -242,66 +219,66 @@ void check_spec_get_with_wrong_index(void) {
 
 void check_spec_get_with_int8_parameter(void) {
     int8_t data;
-    spec_api_get(&hspec, CONFIG_I8, &data, sizeof(DEFAULT_I8));
-    TEST_ASSERT_EQUAL_INT8(DEFAULT_I8, data);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(SPEC_RC_OK, spec_api_get(&hspec, CONFIG_I8, &data, sizeof(DEFAULT_I8)), "spec_api_get failed!");
+    TEST_ASSERT_EQUAL_INT8_MESSAGE(DEFAULT_I8, data, "Wrong data value!");
 }
 
 void check_spec_get_with_uint8_parameter(void) {
     uint8_t data;
-    spec_api_get(&hspec, CONFIG_U8, &data, sizeof(DEFAULT_U8));
-    TEST_ASSERT_EQUAL_INT8(DEFAULT_U8, data);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(SPEC_RC_OK, spec_api_get(&hspec, CONFIG_U8, &data, sizeof(DEFAULT_U8)), "spec_api_get failed!");
+    TEST_ASSERT_EQUAL_UINT8_MESSAGE(DEFAULT_U8, data, "Wrong data value!");
 }
 
 void check_spec_get_with_int16_parameter(void) {
     int16_t data;
-    spec_api_get(&hspec, CONFIG_I16, &data, sizeof(DEFAULT_I16));
-    TEST_ASSERT_EQUAL_INT16(DEFAULT_I16, data);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(SPEC_RC_OK, spec_api_get(&hspec, CONFIG_I16, &data, sizeof(DEFAULT_I16)), "spec_api_get failed!");
+    TEST_ASSERT_EQUAL_INT16_MESSAGE(DEFAULT_I16, data, "Wrong data value!");
 }
 
 void check_spec_get_with_uint16_parameter(void) {
     uint16_t data;
-    spec_api_get(&hspec, CONFIG_U16, &data, sizeof(DEFAULT_U16));
-    TEST_ASSERT_EQUAL_INT16(DEFAULT_U16, data);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(SPEC_RC_OK, spec_api_get(&hspec, CONFIG_U16, &data, sizeof(DEFAULT_U16)), "spec_api_get failed!");
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(DEFAULT_U16, data, "Wrong data value!");
 }
 
 void check_spec_get_with_int32_parameter(void) {
     int32_t data;
-    spec_api_get(&hspec, CONFIG_I32, &data, sizeof(DEFAULT_I32));
-    TEST_ASSERT_EQUAL_INT32(DEFAULT_I32, data);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(SPEC_RC_OK, spec_api_get(&hspec, CONFIG_I32, &data, sizeof(DEFAULT_I32)), "spec_api_get failed!");
+    TEST_ASSERT_EQUAL_INT32_MESSAGE(DEFAULT_I32, data, "Wrong data value!");
 }
 
 void check_spec_get_with_uint32_parameter(void) {
     uint32_t data;
-    spec_api_get(&hspec, CONFIG_U32, &data, sizeof(DEFAULT_U32));
-    TEST_ASSERT_EQUAL_INT32(DEFAULT_U32, data);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(SPEC_RC_OK, spec_api_get(&hspec, CONFIG_U32, &data, sizeof(DEFAULT_U32)), "spec_api_get failed!");
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(DEFAULT_U32, data, "Wrong data value!");
 }
 
 void check_spec_get_with_int64_parameter(void) {
     int64_t data;
-    spec_api_get(&hspec, CONFIG_I64, &data, sizeof(DEFAULT_I64));
-    TEST_ASSERT_EQUAL_INT64(DEFAULT_I64, data);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(SPEC_RC_OK, spec_api_get(&hspec, CONFIG_I64, &data, sizeof(DEFAULT_I64)), "spec_api_get failed!");
+    TEST_ASSERT_EQUAL_INT64_MESSAGE(DEFAULT_I64, data, "Wrong data value!");
 }
 
 void check_spec_get_with_uint64_parameter(void) {
     uint64_t data;
-    spec_api_get(&hspec, CONFIG_U64, &data, sizeof(DEFAULT_U64));
-    TEST_ASSERT_EQUAL_INT64(DEFAULT_U64, data);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(SPEC_RC_OK, spec_api_get(&hspec, CONFIG_U64, &data, sizeof(DEFAULT_U64)), "spec_api_get failed!");
+    TEST_ASSERT_EQUAL_UINT64_MESSAGE(DEFAULT_U64, data, "Wrong data value!");
 }
 
 void check_spec_get_with_float_parameter(void) {
     float data;
-    spec_api_get(&hspec, CONFIG_FLOAT, &data, sizeof(DEFAULT_FLOAT));
-    TEST_ASSERT_EQUAL_FLOAT(DEFAULT_FLOAT, data);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(SPEC_RC_OK, spec_api_get(&hspec, CONFIG_FLOAT, &data, sizeof(DEFAULT_FLOAT)), "spec_api_get failed!");
+    TEST_ASSERT_EQUAL_FLOAT_MESSAGE(DEFAULT_FLOAT, data, "Wrong data value!");
 }
 
 void check_spec_get_with_bool_parameter(void) {
     bool data;
-    spec_api_get(&hspec, CONFIG_BOOL, &data, sizeof(DEFAULT_BOOL));
+    TEST_ASSERT_EQUAL_INT_MESSAGE(SPEC_RC_OK, spec_api_get(&hspec, CONFIG_BOOL, &data, sizeof(DEFAULT_BOOL)), "spec_api_get failed!");
 
     if (DEFAULT_BOOL) {
-        TEST_ASSERT_TRUE(data);
+        TEST_ASSERT_TRUE_MESSAGE(data, "Wrong data value!");
     } else {
-        TEST_ASSERT_FALSE(data);
+        TEST_ASSERT_FALSE_MESSAGE(data, "Wrong data value!");
     }
 }
 
@@ -384,7 +361,6 @@ void check_spec_set_with_bool_parameter(void) {
 /*! @} */
 
 int main(void) {
-    init_fake_nvm();
     UNITY_BEGIN();
 
     /*!
@@ -405,6 +381,7 @@ int main(void) {
 
     RUN_TEST(check_spec_load_with_null_handler);
     RUN_TEST(check_spec_load_with_empty_nvm);
+    RUN_TEST(check_spec_load_with_different_versions);
     RUN_TEST(check_spec_load_with_right_nvm);
 
     /*! @} */

@@ -1,7 +1,4 @@
-
-# Simple Persistent Embedded Configurator (S.P.E.C.)
-This library provides a simple way to load, store and change MCUs configuration
-parameters run-time.
+ # Simple Persistent Embedded Configurator (S.P.E.C.) This library provides a simple way to load, store and change MCUs configuration parameters run-time.
 
 ## Dependencies
 This library relies on the [ArenaAllocator](https://github.com/eagletrt/libarena-allocator-sw.git) for memory management. Make sure to 
@@ -53,8 +50,5 @@ to read and write data to the desired NVM.
  **/
 spec_api_init(&cfg, &arena, DEFAULT_CFG, 3U, read_nvm, write_nvm);
 ```
-## API Reference
-For detailed information about the API, check [API.md](./api.md).
-
 ## Examples
 For more examples check the [examples](./examples) folder.

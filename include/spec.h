@@ -57,6 +57,9 @@ typedef enum SpecReturnCode (*spec_read_fn)(size_t offset, void *data, size_t si
  */
 typedef enum SpecReturnCode (*spec_write_fn)(size_t offset, const void *data, size_t size);
 
+/*!
+ * \brief           A "fat-pointer" structure representing a configuration parameter.
+ */
 struct SpecParameter {
     void *data;  /*!< Parameter's data */
     size_t size; /*!< The data size */
@@ -69,7 +72,8 @@ struct SpecParameter {
  * \attention       This structure should not be used directly.
  */
 struct SpecHandler {
-    struct SpecParameter *param_data; /*!< The configuration data */
+    uint32_t magic_num;               /*!< The configuration's magic number. */
+    struct SpecParameter *param_data; /*!< The configuration's parameters */
     size_t param_count;               /*!< The number of parameters */
     spec_read_fn read_nvm;            /*!< Function to write on NVM */
     spec_write_fn write_nvm;          /*!< Function to read from NVM */
