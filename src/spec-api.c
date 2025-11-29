@@ -1,4 +1,4 @@
-*!
+/*!
  * \file            spec-api.c
  * \date            2025-07-10
  * \authors         Mirko Lana [mirko.lana@eagletrt.it]
