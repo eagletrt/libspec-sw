@@ -1,4 +1,4 @@
-/*!
+*!
  * \file            spec-api.c
  * \date            2025-07-10
  * \authors         Mirko Lana [mirko.lana@eagletrt.it]
@@ -133,7 +133,7 @@ enum SpecReturnCode spec_api_store(const struct SpecHandler *hspec) {
 
     size_t offset = sizeof(hspec->magic_num);
     for (size_t i = 0U; i < hspec->param_count; ++i) {
-        enum SpecReturnCode ret = hspec->write_nvm(offset, hspec->param_data[i].data, hspec->param_data[i].size);
+        ret = hspec->write_nvm(offset, hspec->param_data[i].data, hspec->param_data[i].size);
         if (ret != SPEC_RC_OK) {
             return ret;
         }
