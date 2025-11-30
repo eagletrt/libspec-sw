@@ -11,6 +11,7 @@ as shown in the usage section [here](https://github.com/eagletrt/libring-buffer-
 using `struct SpecHandler` and initialize it by using the `spec_api_init()` function.
 
 ```c
+const uint32_t CFG_VERSION = 0xB16B00B5U;
 const struct SpecParameter DEFAULT_CFG[3U] = {
 	{ .data = (int8_t[]){0x1F}, .size = 1U },
 	{ .data = (int8_t[]){0x2F}, .size = 1U },
@@ -21,7 +22,7 @@ ArenaAllocatorHandler_t arena;
 struct SpecHandler cfg;
 
 arena_allocator_api_init(&arena);
-spec_api_init(&spec, &area, DEFAULT_CFG, 3U, NULL, NULL);
+spec_api_init(&spec, &area, DEFAULT_CFG, 3U, NULL, NULL, CFG_VERSION);
 ```
 We need to declare the `DEFAULT_CFG`  because it will be used if no configuration
 is stored inside the MCU. `DEFAULT_CFG` is an array of  parameters; it contains 
