@@ -274,12 +274,7 @@ void check_spec_get_with_float_parameter(void) {
 void check_spec_get_with_bool_parameter(void) {
     bool data;
     TEST_ASSERT_EQUAL_INT_MESSAGE(SPEC_RC_OK, spec_api_get(&hspec, CONFIG_BOOL, &data, sizeof(DEFAULT_BOOL)), "spec_api_get failed!");
-
-    if (DEFAULT_BOOL) {
-        TEST_ASSERT_TRUE_MESSAGE(data, "Wrong data value!");
-    } else {
-        TEST_ASSERT_FALSE_MESSAGE(data, "Wrong data value!");
-    }
+    TEST_ASSERT_MESSAGE(data == DEFAULT_BOOL, "Wrong data value!");
 }
 
 /*! @} */
