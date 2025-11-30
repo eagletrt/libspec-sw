@@ -1,4 +1,5 @@
- # Simple Persistent Embedded Configurator (S.P.E.C.) This library provides a simple way to load, store and change MCUs configuration parameters run-time.
+ # Simple Persistent Embedded Configurator (S.P.E.C.)
+ This library provides a simple way to load, store and change MCUs configuration parameters run-time.
 
 ## Dependencies
 This library relies on the [ArenaAllocator](https://github.com/eagletrt/libarena-allocator-sw.git) for memory management. Make sure to 
