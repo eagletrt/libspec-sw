@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
   "name": "SPEC",
   "version": "0.1.0",
-  "description": "Library to dynamically configure MCUs parameters via different types of peripherals. Can be used for any embedded system.",
+  "description": "Library to dynamically configure MCUs parameters via different types of peripherals.",
   "keywords": [
     "configurator",
     "embedded"

@@ -19,15 +19,12 @@
 
 #include "spec-api.h"
 #include "arena-allocator-api.h"
+#include "spec.h"
 
 #include <stdbool.h>
 #include <string.h>
 #include <stdint.h>
-
-/*!
- * \brief           Configuration magic number.
- */
-static const uint32_t SPEC_RC_MAGIC_NUM = 0xB16B00B5U;
+#include <time.h>
 
 /*!
  * \brief           A dummy read function.
@@ -57,7 +54,7 @@ static bool prv_spec_api_check_magic_number(const struct SpecHandler *hspec) {
         return false;
     }
 
-    return magic_num == SPEC_RC_MAGIC_NUM;
+    return magic_num == hspec->magic_num;
 }
 
 enum SpecReturnCode spec_api_init(struct SpecHandler *hspec,
@@ -65,7 +62,8 @@ enum SpecReturnCode spec_api_init(struct SpecHandler *hspec,
                                   const struct SpecParameter *param_data,
                                   size_t param_count,
                                   spec_read_fn read_nvm,
-                                  spec_write_fn write_nvm) {
+                                  spec_write_fn write_nvm,
+                                  uint32_t magic_num) {
     if (hspec == NULL || harena == NULL || param_data == NULL) {
         return SPEC_RC_NULL_PTR;
     }
@@ -73,6 +71,7 @@ enum SpecReturnCode spec_api_init(struct SpecHandler *hspec,
     hspec->param_count = param_count;
     hspec->read_nvm = read_nvm == NULL ? prv_spec_api_dummy_read : read_nvm;
     hspec->write_nvm = write_nvm == NULL ? prv_spec_api_dummy_write : write_nvm;
+    hspec->magic_num = magic_num;
     hspec->param_data = arena_allocator_api_calloc(harena, sizeof(struct SpecParameter), param_count);
     if (hspec->param_data == NULL) {
         return SPEC_RC_NULL_PTR;
@@ -84,10 +83,16 @@ enum SpecReturnCode spec_api_init(struct SpecHandler *hspec,
             return SPEC_RC_NULL_PTR;
         }
         hspec->param_data[i].size = param_data[i].size;
+    }
 
-        enum SpecReturnCode ret = spec_api_set(hspec, i, param_data[i].data, param_data[i].size);
-        if (ret != SPEC_RC_OK) {
-            return ret;
+    if (prv_spec_api_check_magic_number(hspec)) {
+        spec_api_load(hspec);
+    } else {
+        for (size_t i = 0U; i < param_count; ++i) {
+            enum SpecReturnCode ret = spec_api_set(hspec, i, param_data[i].data, param_data[i].size);
+            if (ret != SPEC_RC_OK) {
+                return ret;
+            }
         }
     }
 
@@ -103,7 +108,7 @@ enum SpecReturnCode spec_api_load(struct SpecHandler *hspec) {
         return SPEC_RC_NO_CONFIG;
     }
 
-    size_t offset = sizeof(SPEC_RC_MAGIC_NUM);
+    size_t offset = sizeof(hspec->magic_num);
     for (size_t i = 0U; i < hspec->param_count; ++i) {
         enum SpecReturnCode ret = hspec->read_nvm(offset, hspec->param_data[i].data, hspec->param_data[i].size);
         if (ret != SPEC_RC_OK) {
@@ -121,16 +126,14 @@ enum SpecReturnCode spec_api_store(const struct SpecHandler *hspec) {
         return SPEC_RC_NULL_PTR;
     }
 
-    if (!prv_spec_api_check_magic_number(hspec)) {
-        enum SpecReturnCode ret = hspec->write_nvm(0U, (void *)&SPEC_RC_MAGIC_NUM, sizeof(SPEC_RC_MAGIC_NUM));
-        if (ret != SPEC_RC_OK) {
-            return ret;
-        }
+    enum SpecReturnCode ret = hspec->write_nvm(0U, (void *)&hspec->magic_num, sizeof(hspec->magic_num));
+    if (ret != SPEC_RC_OK) {
+        return ret;
     }
 
-    size_t offset = sizeof(SPEC_RC_MAGIC_NUM);
+    size_t offset = sizeof(hspec->magic_num);
     for (size_t i = 0U; i < hspec->param_count; ++i) {
-        enum SpecReturnCode ret = hspec->write_nvm(offset, hspec->param_data[i].data, hspec->param_data[i].size);
+        ret = hspec->write_nvm(offset, hspec->param_data[i].data, hspec->param_data[i].size);
         if (ret != SPEC_RC_OK) {
             return ret;
         }

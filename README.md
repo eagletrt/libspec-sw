@@ -1,7 +1,5 @@
-
-# Simple Persistent Embedded Configurator (S.P.E.C.)
-This library provides a simple way to load, store and change MCUs configuration
-parameters run-time.
+ # Simple Persistent Embedded Configurator (S.P.E.C.)
+ This library provides a simple way to load, store and change MCUs configuration parameters run-time.
 
 ## Dependencies
 This library relies on the [ArenaAllocator](https://github.com/eagletrt/libarena-allocator-sw.git) for memory management. Make sure to 
@@ -13,6 +11,7 @@ as shown in the usage section [here](https://github.com/eagletrt/libring-buffer-
 using `struct SpecHandler` and initialize it by using the `spec_api_init()` function.
 
 ```c
+const uint32_t CFG_VERSION = 0xB16B00B5U;
 const struct SpecParameter DEFAULT_CFG[3U] = {
 	{ .data = (int8_t[]){0x1F}, .size = 1U },
 	{ .data = (int8_t[]){0x2F}, .size = 1U },
@@ -23,7 +22,7 @@ ArenaAllocatorHandler_t arena;
 struct SpecHandler cfg;
 
 arena_allocator_api_init(&arena);
-spec_api_init(&spec, &area, DEFAULT_CFG, 3U, NULL, NULL);
+spec_api_init(&spec, &area, DEFAULT_CFG, 3U, NULL, NULL, CFG_VERSION);
 ```
 We need to declare the `DEFAULT_CFG`  because it will be used if no configuration
 is stored inside the MCU. `DEFAULT_CFG` is an array of  parameters; it contains 
@@ -53,8 +52,5 @@ to read and write data to the desired NVM.
  **/
 spec_api_init(&cfg, &arena, DEFAULT_CFG, 3U, read_nvm, write_nvm);
 ```
-## API Reference
-For detailed information about the API, check [API.md](./api.md).
-
 ## Examples
 For more examples check the [examples](./examples) folder.
