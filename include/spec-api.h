@@ -32,7 +32,7 @@
  * \param[in]       param_count: The number of parameters.
  * \param[in]       read_nvm: The function used to read from NVM.
  * \param[in]       write_nvm: The function used to write into NVM.
- * \param[in]       magic_num: The configuartion's magic number.
+ * \param[in]       version: The configuartion's version.
  * \return          SPEC_RC_OK on success, SPEC_RC_NULL_PTR otherwise.
  */
 enum SpecReturnCode spec_api_init(struct SpecHandler *hspec,
@@ -41,7 +41,7 @@ enum SpecReturnCode spec_api_init(struct SpecHandler *hspec,
                                   size_t param_count,
                                   spec_read_fn read_nvm,
                                   spec_write_fn write_nvm,
-                                  uint32_t magic_num);
+                                  uint32_t version);
 
 /*!
  * \brief           Loads the configuration from NVM into RAM.

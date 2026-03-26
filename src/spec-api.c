@@ -42,19 +42,19 @@ static enum SpecReturnCode prv_spec_api_dummy_write(size_t offset, const void *d
 
 /*!
  * \brief           Check if there is a configuration saved in memory by
- *                  reading a magic number, if there any.
+ *                  reading the version, if there any.
  *
  * \param[out]      hspec: The configuration handler structure.
  * \return          true if present, false otherwise.
  */
-static bool prv_spec_api_check_magic_number(const struct SpecHandler *hspec) {
-    uint32_t magic_num = 0U;
-    enum SpecReturnCode ret = hspec->read_nvm(0U, &magic_num, sizeof(magic_num));
+static bool prv_spec_api_check_version(const struct SpecHandler *hspec) {
+    uint32_t version = 0U;
+    enum SpecReturnCode ret = hspec->read_nvm(0U, &version, sizeof(version));
     if (ret != SPEC_RC_OK) {
         return false;
     }
 
-    return magic_num == hspec->magic_num;
+    return version == hspec->version && version != 0;
 }
 
 enum SpecReturnCode spec_api_init(struct SpecHandler *hspec,
@@ -63,7 +63,7 @@ enum SpecReturnCode spec_api_init(struct SpecHandler *hspec,
                                   size_t param_count,
                                   spec_read_fn read_nvm,
                                   spec_write_fn write_nvm,
-                                  uint32_t magic_num) {
+                                  uint32_t version) {
     if (hspec == NULL || harena == NULL || param_data == NULL) {
         return SPEC_RC_NULL_PTR;
     }
@@ -71,7 +71,7 @@ enum SpecReturnCode spec_api_init(struct SpecHandler *hspec,
     hspec->param_count = param_count;
     hspec->read_nvm = read_nvm == NULL ? prv_spec_api_dummy_read : read_nvm;
     hspec->write_nvm = write_nvm == NULL ? prv_spec_api_dummy_write : write_nvm;
-    hspec->magic_num = magic_num;
+    hspec->version = version;
     hspec->param_data = arena_allocator_api_calloc(harena, sizeof(struct SpecParameter), param_count);
     if (hspec->param_data == NULL) {
         return SPEC_RC_NULL_PTR;
@@ -85,7 +85,7 @@ enum SpecReturnCode spec_api_init(struct SpecHandler *hspec,
         hspec->param_data[i].size = param_data[i].size;
     }
 
-    if (prv_spec_api_check_magic_number(hspec)) {
+    if (prv_spec_api_check_version(hspec)) {
         spec_api_load(hspec);
     } else {
         for (size_t i = 0U; i < param_count; ++i) {
@@ -104,11 +104,11 @@ enum SpecReturnCode spec_api_load(struct SpecHandler *hspec) {
         return SPEC_RC_NULL_PTR;
     }
 
-    if (!prv_spec_api_check_magic_number(hspec)) {
+    if (!prv_spec_api_check_version(hspec)) {
         return SPEC_RC_NO_CONFIG;
     }
 
-    size_t offset = sizeof(hspec->magic_num);
+    size_t offset = sizeof(hspec->version);
     for (size_t i = 0U; i < hspec->param_count; ++i) {
         enum SpecReturnCode ret = hspec->read_nvm(offset, hspec->param_data[i].data, hspec->param_data[i].size);
         if (ret != SPEC_RC_OK) {
@@ -126,12 +126,12 @@ enum SpecReturnCode spec_api_store(const struct SpecHandler *hspec) {
         return SPEC_RC_NULL_PTR;
     }
 
-    enum SpecReturnCode ret = hspec->write_nvm(0U, (void *)&hspec->magic_num, sizeof(hspec->magic_num));
+    enum SpecReturnCode ret = hspec->write_nvm(0U, (void *)&hspec->version, sizeof(hspec->version));
     if (ret != SPEC_RC_OK) {
         return ret;
     }
 
-    size_t offset = sizeof(hspec->magic_num);
+    size_t offset = sizeof(hspec->version);
     for (size_t i = 0U; i < hspec->param_count; ++i) {
         ret = hspec->write_nvm(offset, hspec->param_data[i].data, hspec->param_data[i].size);
         if (ret != SPEC_RC_OK) {

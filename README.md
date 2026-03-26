@@ -53,4 +53,8 @@ to read and write data to the desired NVM.
 spec_api_init(&cfg, &arena, DEFAULT_CFG, 3U, read_nvm, write_nvm);
 ```
 ## Examples
+
+> [!NOTE]
+> Examples are work-in-progress
+
 For more examples check the [examples](./examples) folder.

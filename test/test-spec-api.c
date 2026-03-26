@@ -28,7 +28,7 @@
 #include "spec-api.h"
 
 #define NVM_SIZE 0xFFFU
-#define MAGIC_NUM 0xB16B00B5U
+#define VERSION 0xB16B00B5U
 
 /*!
  * \brief           Enumeration with all configuration parameters.
@@ -76,9 +76,9 @@ uint8_t fake_nvm[NVM_SIZE] = { 0 };
 uint8_t fake_nvm_copy[NVM_SIZE] = { 0 };
 
 void init_fake_nvm(void) {
-    uint32_t magic_num = MAGIC_NUM;
-    memcpy(fake_nvm, &magic_num, sizeof(magic_num));
-    size_t offset = sizeof(magic_num);
+    uint32_t version = VERSION;
+    memcpy(fake_nvm, &version, sizeof(version));
+    size_t offset = sizeof(version);
     for (size_t i = 0; i < CONFIG_LEN; i++) {
         memcpy(&fake_nvm[offset], DEFAULT_CONFIG[i].data, DEFAULT_CONFIG[i].size);
         offset += DEFAULT_CONFIG[i].size;
@@ -122,7 +122,7 @@ void setUp(void) {
     init_fake_nvm();
     memset(fake_nvm_copy, 0U, NVM_SIZE);
     arena_allocator_api_init(&harena);
-    spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, read_nvm_array, write_nvm_array, MAGIC_NUM);
+    spec_api_init(&hspec, &harena, DEFAULT_CONFIG, CONFIG_LEN, read_nvm_array, write_nvm_array, VERSION);
 }
 
 void tearDown(void) {
@@ -135,16 +135,16 @@ void tearDown(void) {
  */
 
 void check_spec_init_null_spec_handler(void) {
-    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_init(NULL, &harena, DEFAULT_CONFIG, CONFIG_LEN, NULL, NULL, MAGIC_NUM));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_init(NULL, &harena, DEFAULT_CONFIG, CONFIG_LEN, NULL, NULL, VERSION));
 }
 
 void check_spec_init_null_arena_handler(void) {
-    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_init(&hspec, NULL, DEFAULT_CONFIG, CONFIG_LEN, NULL, NULL, MAGIC_NUM));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_init(&hspec, NULL, DEFAULT_CONFIG, CONFIG_LEN, NULL, NULL, VERSION));
 }
 
 void check_spec_init_null_parameters(void) {
     struct SpecHandler hspec_loc;
-    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_init(&hspec_loc, &harena, NULL, CONFIG_LEN, NULL, NULL, MAGIC_NUM));
+    TEST_ASSERT_EQUAL_INT(SPEC_RC_NULL_PTR, spec_api_init(&hspec_loc, &harena, NULL, CONFIG_LEN, NULL, NULL, VERSION));
 }
 
 /*! @} */
@@ -171,7 +171,7 @@ void check_spec_load_with_right_nvm(void) {
 }
 
 void check_spec_load_with_different_versions(void) {
-    hspec.magic_num = 0x128E57C;
+    hspec.version = 0x128E57C;
     TEST_ASSERT_EQUAL_INT(SPEC_RC_NO_CONFIG, spec_api_load(&hspec));
 }
 

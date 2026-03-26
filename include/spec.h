@@ -72,7 +72,7 @@ struct SpecParameter {
  * \attention       This structure should not be used directly.
  */
 struct SpecHandler {
-    uint32_t magic_num;               /*!< The configuration's magic number. */
+    uint32_t version;                 /*!< The configuration's version. */
     struct SpecParameter *param_data; /*!< The configuration's parameters */
     size_t param_count;               /*!< The number of parameters */
     spec_read_fn read_nvm;            /*!< Function to write on NVM */
