@@ -18,7 +18,7 @@ const struct SpecParameter DEFAULT_CFG[3U] = {
 	{ .data = (int8_t[]){0x3F}, .size = 1U },
 };
 
-ArenaAllocatorHandler_t arena;
+struct ArenaAllocatorHandler arena;
 struct SpecHandler cfg;
 
 arena_allocator_api_init(&arena);
