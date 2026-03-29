@@ -70,7 +70,7 @@ const struct SpecParameter DEFAULT_CONFIG[CONFIG_LEN] = {
     { .data = (void *)&DEFAULT_BOOL, .size = sizeof(DEFAULT_BOOL) }
 };
 
-ArenaAllocatorHandler_t harena;
+struct ArenaAllocatorHandler harena;
 struct SpecHandler hspec;
 uint8_t fake_nvm[NVM_SIZE] = { 0 };
 uint8_t fake_nvm_copy[NVM_SIZE] = { 0 };

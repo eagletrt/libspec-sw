@@ -58,7 +58,7 @@ static bool prv_spec_api_check_version(const struct SpecHandler *hspec) {
 }
 
 enum SpecReturnCode spec_api_init(struct SpecHandler *hspec,
-                                  ArenaAllocatorHandler_t *harena,
+                                  struct ArenaAllocatorHandler *harena,
                                   const struct SpecParameter *param_data,
                                   size_t param_count,
                                   spec_read_fn read_nvm,

@@ -36,7 +36,7 @@
  * \return          SPEC_RC_OK on success, SPEC_RC_NULL_PTR otherwise.
  */
 enum SpecReturnCode spec_api_init(struct SpecHandler *hspec,
-                                  ArenaAllocatorHandler_t *harena,
+                                  struct ArenaAllocatorHandler *harena,
                                   const struct SpecParameter *param_data,
                                   size_t param_count,
                                   spec_read_fn read_nvm,
